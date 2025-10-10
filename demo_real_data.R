@@ -17,11 +17,8 @@ setwd("/Users/wyssuser/Documents/Python Repositories/Pluto_Transcriptomics_Pipel
 # Load the package
 devtools::load_all()
 
-# Create demo results directory
-demo_results <- "demo_results_real"
-if (!dir.exists(demo_results)) {
-    dir.create(demo_results, recursive = TRUE)
-}
+# Note: Demo results will be saved in the standard package directories
+# data/PLX073248_real_test/ and results/PLX073248_real_test/
 
 cat("=== transcriptomicsPipeline Real Data Demo ===\n")
 cat("Testing package functionality with real test data...\n\n")
@@ -410,7 +407,7 @@ cat("\n")
 cat("=== Real Data Demo Summary ===\n")
 cat("Demo completed with real test data! Check the output above for any errors.\n")
 cat("Real data used: PLX073248 (Xenopus transcriptomics data)\n")
-cat("Demo results saved in:", demo_results, "\n")
+cat("Demo results saved in standard package directories\n")
 cat("Package data saved in: data/PLX073248_real_test/\n")
 cat("Package results saved in: results/PLX073248_real_test/\n")
 cat("Package appears to be working correctly if no errors were reported.\n")
