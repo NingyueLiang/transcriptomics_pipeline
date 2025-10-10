@@ -17,8 +17,27 @@ setwd("/Users/wyssuser/Documents/Python Repositories/Pluto_Transcriptomics_Pipel
 # Load the package
 devtools::load_all()
 
-# Note: Demo results will be saved in the standard package directories
-# data/PLX073248_real_test/ and results/PLX073248_real_test/
+# Create proper directory structure like the original scripts
+experiment_name <- "PLX073248_real_test"
+data_dir <- file.path("data", experiment_name)
+results_dir <- file.path("results", experiment_name)
+
+# Create necessary directories
+for (dir in c(data_dir, results_dir)) {
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+}
+
+# Create data subdirectories
+data_subdirs <- c("cleaned_data")
+for (subdir in data_subdirs) {
+    dir.create(file.path(data_dir, subdir), showWarnings = FALSE)
+}
+
+# Create results subdirectories  
+results_subdirs <- c("de", "mapping", "gsea", "pca")
+for (subdir in results_subdirs) {
+    dir.create(file.path(results_dir, subdir), showWarnings = FALSE)
+}
 
 cat("=== transcriptomicsPipeline Real Data Demo ===\n")
 cat("Testing package functionality with real test data...\n\n")
@@ -89,7 +108,9 @@ tryCatch({
             species = "xenopus",
             assay_path = "input_data/PLX073248_assay_data.csv",
             sample_path = "input_data/PLX073248_sample_data.csv",
-            experiment_name = "PLX073248_real_test"
+            experiment_name = experiment_name,
+            metadata_columns = c("condition", "timepoint", "dose", "drug", "replicate"),
+            interactive = FALSE # Non-interactive for demo
         )
         
         if (!is.null(experiment_obj)) {
@@ -118,10 +139,10 @@ tryCatch({
     if (exists("clean_data_for_de")) {
         # Test data cleaning with real data
         cleaned_data_name <- clean_data_for_de(
-            experiment_name = "PLX073248_real_test",
+            experiment_name = experiment_name,
             metadata_cols = list(
                 sample_id = "sample_id",
-                group_cols = c("condition", "timepoint", "dose")
+                group_cols = c("condition", "timepoint", "dose", "drug", "replicate")
             )
         )
         
@@ -147,9 +168,9 @@ tryCatch({
     if (exists("run_deseq2_analysis")) {
         # Test DESeq2 analysis with real data (non-interactive)
         de_results <- run_deseq2_analysis(
-            experiment_name = "PLX073248_real_test",
+            experiment_name = experiment_name,
             comparison_cols = c("condition"),
-            reference_levels = list(condition = c("Vehicle", "Ketamine_500")),
+            reference_levels = list(condition = c("vehicle")),
             interactive = FALSE  # Non-interactive for demo
         )
         
@@ -186,7 +207,7 @@ tryCatch({
         pca_results <- perform_pca_analysis(
             data = real_assay_data,
             groups_to_include = c("Veh", "Ket_500"),  # These are the group names after removing replicate numbers
-            experiment_name = "PLX073248_real_test",
+            experiment_name = experiment_name,
             save_results = TRUE
         )
         
@@ -217,10 +238,11 @@ tryCatch({
     if (exists("run_gsea_analysis")) {
         # Test GSEA analysis with real data
         gsea_results <- run_gsea_analysis(
-            experiment_name = "PLX073248_real_test",
+            experiment_name = experiment_name,
             model_type = "deseq2",
             rank_method = "sign_log_padj",
-            collections = c("H")  # Just test Hallmark collection
+            collections = c("H"),  # Just test Hallmark collection
+            interactive = FALSE # Non-interactive for demo
         )
         
         if (!is.null(gsea_results)) {
@@ -408,8 +430,8 @@ cat("=== Real Data Demo Summary ===\n")
 cat("Demo completed with real test data! Check the output above for any errors.\n")
 cat("Real data used: PLX073248 (Xenopus transcriptomics data)\n")
 cat("Demo results saved in standard package directories\n")
-cat("Package data saved in: data/PLX073248_real_test/\n")
-cat("Package results saved in: results/PLX073248_real_test/\n")
+cat("Package data saved in:", data_dir, "\n")
+cat("Package results saved in:", results_dir, "\n")
 cat("Package appears to be working correctly if no errors were reported.\n")
 
 # Don't clean up demo files for real data - keep them for inspection
