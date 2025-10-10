@@ -18,7 +18,8 @@ setwd("/Users/wyssuser/Documents/Python Repositories/Pluto_Transcriptomics_Pipel
 devtools::load_all()
 
 # Create proper directory structure like the original scripts
-experiment_name <- "PLX073248_real_test"
+# Using actual experiment information from PLX073248
+experiment_name <- "xen_tran_2024_12"
 data_dir <- file.path("data", experiment_name)
 results_dir <- file.path("results", experiment_name)
 
@@ -39,8 +40,11 @@ for (subdir in results_subdirs) {
     dir.create(file.path(results_dir, subdir), showWarnings = FALSE)
 }
 
-cat("=== transcriptomicsPipeline Real Data Demo ===\n")
-cat("Testing package functionality with real test data...\n\n")
+cat("=== transcriptomicsPipeline Demo ===\n")
+cat("Testing package functionality with PLX073248 data...\n")
+cat("Experiment: Xenopus transcriptomics experiment December 2024\n")
+cat("Experimenter: Allison Grossberg\n")
+cat("Data Source: PLX073248 (Pluto API)\n\n")
 
 # Test 1: Package Setup
 cat("1. Testing package setup functions...\n")
@@ -74,7 +78,7 @@ tryCatch({
 cat("\n")
 
 # Test 2: Examine real data
-cat("2. Examining real test data...\n")
+cat("2. Examining PLX073248 data...\n")
 tryCatch({
     # Read sample data
     sample_data <- read.csv("input_data/PLX073248_sample_data.csv", stringsAsFactors = FALSE)
@@ -82,7 +86,10 @@ tryCatch({
     cat("  - Samples:", nrow(sample_data), "\n")
     cat("  - Columns:", paste(colnames(sample_data), collapse = ", "), "\n")
     cat("  - Conditions:", paste(unique(sample_data$condition), collapse = ", "), "\n")
+    cat("  - Drugs:", paste(unique(sample_data$drug), collapse = ", "), "\n")
+    cat("  - Doses:", paste(unique(sample_data$dose), collapse = ", "), "\n")
     cat("  - Timepoints:", paste(unique(sample_data$timepoint), collapse = ", "), "\n")
+    cat("  - Replicates:", paste(unique(sample_data$replicate), collapse = ", "), "\n")
     
     # Read assay data (first few rows to check structure)
     assay_data <- read.csv("input_data/PLX073248_assay_data.csv", nrows = 5, stringsAsFactors = FALSE)
@@ -92,7 +99,7 @@ tryCatch({
     cat("  - Gene column:", colnames(assay_data)[1], "\n")
     
 }, error = function(e) {
-    cat("✗ Error examining real data:", e$message, "\n")
+    cat("✗ Error examining PLX073248 data:", e$message, "\n")
 })
 
 cat("\n")
@@ -330,7 +337,7 @@ cat("\n")
 cat("10. Checking output files and directories...\n")
 tryCatch({
     # Check if data directory was created
-    data_dir <- "data/PLX073248_real_test"
+    # data_dir already defined at top of script
     if (dir.exists(data_dir)) {
         cat("✓ Data directory created:", data_dir, "\n")
         
@@ -348,7 +355,7 @@ tryCatch({
     }
     
     # Check if results directory was created
-    results_dir <- "results/PLX073248_real_test"
+    # results_dir already defined at top of script
     if (dir.exists(results_dir)) {
         cat("✓ Results directory created:", results_dir, "\n")
         
@@ -426,15 +433,17 @@ tryCatch({
 cat("\n")
 
 # Summary
-cat("=== Real Data Demo Summary ===\n")
-cat("Demo completed with real test data! Check the output above for any errors.\n")
-cat("Real data used: PLX073248 (Xenopus transcriptomics data)\n")
+cat("=== Demo Summary ===\n")
+cat("Demo completed with PLX073248 data! Check the output above for any errors.\n")
+cat("Experiment: Xenopus transcriptomics experiment December 2024\n")
+cat("Experimenter: Allison Grossberg\n")
+cat("Data Source: PLX073248 (Pluto API)\n")
 cat("Demo results saved in standard package directories\n")
 cat("Package data saved in:", data_dir, "\n")
 cat("Package results saved in:", results_dir, "\n")
 cat("Package appears to be working correctly if no errors were reported.\n")
 
 # Don't clean up demo files for real data - keep them for inspection
-cat("\nReal data analysis results have been preserved for inspection.\n")
+cat("\nPLX073248 analysis results have been preserved for inspection.\n")
 
-cat("\n=== Real Data Demo Complete ===\n")
+cat("\n=== Demo Complete ===\n")
