@@ -280,8 +280,10 @@ clean_data_for_de <- function(
     # Create cleaned data directory
     cleaned_data_dir <- file.path(config$data_dir, "cleaned_data")
     tryCatch({
-        if (!dir.create(cleaned_data_dir, recursive = TRUE, showWarnings = FALSE)) {
-            stop("Failed to create cleaned data directory: ", cleaned_data_dir)
+        if (!dir.exists(cleaned_data_dir)) {
+            if (!dir.create(cleaned_data_dir, recursive = TRUE, showWarnings = FALSE)) {
+                stop("Failed to create cleaned data directory: ", cleaned_data_dir)
+            }
         }
     }, error = function(e) {
         stop("Error creating cleaned data directory: ", e$message)

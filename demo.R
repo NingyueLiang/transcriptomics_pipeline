@@ -82,8 +82,11 @@ tryCatch({
     gene_symbols <- paste0("GENE_", sprintf("%04d", 1:n_genes))
     rownames(counts_matrix) <- gene_symbols
     
-    # Create sample IDs
-    sample_ids <- paste0("SAMPLE_", sprintf("%02d", 1:n_samples))
+    # Create sample IDs with condition prefix for PCA compatibility
+    sample_ids <- c(
+        paste0("control_", sprintf("%02d", 1:6)),
+        paste0("treatment_", sprintf("%02d", 1:6))
+    )
     colnames(counts_matrix) <- sample_ids
     
     # Create sample metadata
@@ -215,9 +218,10 @@ cat("\n")
 cat("6. Testing PCA functions...\n")
 tryCatch({
     if (exists("perform_pca_analysis")) {
-        # Test PCA analysis
+        # Test PCA analysis with proper data format
+        pca_data <- data.frame(gene_symbol = gene_symbols, counts_matrix, stringsAsFactors = FALSE)
         pca_results <- perform_pca_analysis(
-            data = counts_matrix,
+            data = pca_data,
             groups_to_include = c("control", "treatment"),
             experiment_name = "demo_experiment",
             save_results = TRUE
@@ -225,8 +229,12 @@ tryCatch({
         
         if (!is.null(pca_results)) {
             cat("✓ PCA analysis successful\n")
-            cat("  - PC1 variance explained:", round(pca_results$var_explained[1], 2), "%\n")
-            cat("  - PC2 variance explained:", round(pca_results$var_explained[2], 2), "%\n")
+            if (!is.null(pca_results$variance_explained)) {
+                cat("  - PC1 variance explained:", round(pca_results$variance_explained[1], 2), "%\n")
+                cat("  - PC2 variance explained:", round(pca_results$variance_explained[2], 2), "%\n")
+            } else {
+                cat("  - PCA analysis completed successfully\n")
+            }
         } else {
             cat("✗ PCA analysis returned NULL\n")
         }

@@ -445,6 +445,21 @@ import_omics_data <- function(
         additional_notes = additional_notes
     )
     metadata$metadata_columns <- metadata_columns
+    
+    # Create config for the experiment
+    config <- list(
+        name = experiment_name,
+        date = experiment_date,
+        data_dir = here("data", experiment_name),
+        results_dir = here("results", experiment_name),
+        data_source = data_source,
+        data_type = data_type,
+        species = species,
+        metadata_columns = metadata_columns,
+        additional_notes = additional_notes
+    )
+    metadata$config <- config
+    metadata$prefix <- experiment_name
 
     # Create valid experiment name
     experiment_name <- make_valid_name(experiment_name %||% experiment_id)

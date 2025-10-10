@@ -31,6 +31,17 @@ setup_config <- list(
 #' @return Logical indicating success
 #' @export
 install_single_package <- function(package_name, source = "cran") {
+    # Validate inputs
+    if (is.null(package_name)) {
+        stop("package_name cannot be NULL")
+    }
+    if (!is.character(package_name) || nchar(package_name) == 0) {
+        stop("package_name must be a non-empty character string")
+    }
+    if (!source %in% c("cran", "bioc")) {
+        stop("Invalid source. Must be 'cran' or 'bioc'")
+    }
+    
     tryCatch({
         if (source == "cran") {
             if (!require(package_name, character.only = TRUE, quietly = TRUE)) {

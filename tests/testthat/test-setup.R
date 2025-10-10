@@ -8,8 +8,8 @@ test_that("setup_config is properly defined", {
 })
 
 test_that("install_single_package validates inputs", {
-  expect_error(install_single_package(NULL))
-  expect_error(install_single_package("", "invalid_source"))
+  expect_error(install_single_package(NULL), "package_name cannot be NULL")
+  expect_error(install_single_package("", "invalid_source"), "package_name must be a non-empty character string")
 })
 
 test_that("setup_packages validates config", {

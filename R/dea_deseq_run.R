@@ -798,8 +798,10 @@ run_deseq2_analysis <- function(experiment_name,
     
     # Create results directory
     results_dir <- here("results", experiment_name, "de", "deseq2", "simple")
-    if (!dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)) {
-        stop("Failed to create results directory: ", results_dir)
+    if (!dir.exists(results_dir)) {
+        if (!dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)) {
+            stop("Failed to create results directory: ", results_dir)
+        }
     }
     
     # Handle batch mode
@@ -856,18 +858,11 @@ run_deseq2_analysis <- function(experiment_name,
             
             # Run flexible DESeq2 analysis
             result <- run_flexible_deseq2(
-                dds = dds,
-                contrast = contrast,
-                gene_symbols = NULL,  # Will be extracted from dds if available
-                filter_low_counts = TRUE,
+                counts_matrix = comparison_data$counts,
+                sample_info = comparison_data$sample_info,
+                comparison = contrast,
                 min_count = 10,
-                min_samples = 3,
-                alpha = 0.05,
-                lfc_threshold = 0,
-                independent_filtering = TRUE,
-                cooks_cutoff = TRUE,
-                parallel = FALSE,
-                BPPARAM = NULL
+                min_sample_percent = 0.25
             )
             
             if (!is.null(result)) {
@@ -948,7 +943,7 @@ create_deseq2_dataset <- function(filtered_counts, sample_info, comparison) {
 #' Run DESeq2 analysis on dataset
 #' @param dds DESeq2 dataset
 #' @return Fitted DESeq2 dataset
-run_deseq2_analysis <- function(dds) {
+run_deseq2_on_dataset <- function(dds) {
     message("Running DESeq2 analysis...")
     dds <- DESeq2::DESeq(dds)
     return(dds)
@@ -1009,7 +1004,7 @@ run_flexible_deseq2 <- function(counts_matrix, sample_info, comparison,
     dds <- create_deseq2_dataset(filtered_data$counts, prepared_data$sample_info, comparison)
 
     # Run DESeq2
-    dds <- run_deseq2_analysis(dds)
+    dds <- run_deseq2_on_dataset(dds)
 
     # Get results
     res <- extract_deseq2_results(dds, comparison)
