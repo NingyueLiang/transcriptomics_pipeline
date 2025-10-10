@@ -17,8 +17,6 @@ setwd("/Users/wyssuser/Documents/Python Repositories/Pluto_Transcriptomics_Pipel
 # Load the package
 devtools::load_all()
 
-# Create proper directory structure like the original scripts
-# Using actual experiment information from PLX073248
 experiment_name <- "xen_tran_2024_12"
 data_dir <- file.path("data", experiment_name)
 results_dir <- file.path("results", experiment_name)
@@ -116,8 +114,7 @@ tryCatch({
             assay_path = "input_data/PLX073248_assay_data.csv",
             sample_path = "input_data/PLX073248_sample_data.csv",
             experiment_name = experiment_name,
-            metadata_columns = c("condition", "timepoint", "dose", "drug", "replicate"),
-            interactive = FALSE # Non-interactive for demo
+            metadata_columns = c("condition", "timepoint", "dose", "drug", "replicate")
         )
         
         if (!is.null(experiment_obj)) {
@@ -177,7 +174,7 @@ tryCatch({
         de_results <- run_deseq2_analysis(
             experiment_name = experiment_name,
             comparison_cols = c("condition"),
-            reference_levels = list(condition = c("vehicle")),
+            reference_levels = list(condition = c("Vehicle")),  # Use actual condition name
             interactive = FALSE  # Non-interactive for demo
         )
         
@@ -203,17 +200,74 @@ tryCatch({
 
 cat("\n")
 
-# Test 6: Test PCA functions with real data
-cat("6. Testing PCA functions with real data...\n")
+# Test 5.5: Test DESeq2 diagnostics functions
+cat("5.5. Testing DESeq2 diagnostics functions...\n")
+tryCatch({
+    if (exists("generate_deseq2_diagnostics")) {
+        # Test DESeq2 diagnostics generation
+        diagnostics_results <- generate_deseq2_diagnostics(
+            experiment_name = experiment_name,
+            analysis_type = "simple",
+            plot_types = c("dispersion", "ma", "pvalue_histogram")
+        )
+        
+        if (!is.null(diagnostics_results)) {
+            cat("✓ DESeq2 diagnostics generation successful\n")
+            cat("  - Diagnostic plots generated for simple analysis\n")
+        } else {
+            cat("✗ DESeq2 diagnostics generation returned NULL\n")
+        }
+    } else {
+        cat("✗ generate_deseq2_diagnostics function not found\n")
+    }
+    
+}, error = function(e) {
+    cat("✗ Error in DESeq2 diagnostics functions:", e$message, "\n")
+})
+
+cat("\n")
+
+# Test 5.6: Test DESeq2 results export functions
+cat("5.6. Testing DESeq2 results export functions...\n")
+tryCatch({
+    if (exists("export_all_result_types")) {
+        # Test DESeq2 results export
+        export_results <- export_all_result_types(
+            experiment_name = experiment_name,
+            analysis_type = "simple",
+            de_params = list(min_padj = 0.05, min_log2fc = 0),
+            table_params = list(direction = "both", n_genes = 25),
+            volcano_params = list(n_labels = 15),
+            heatmap_params = list(direction = "both", n_genes = 25, scale = TRUE, n_clusters = 3)
+        )
+        
+        if (!is.null(export_results)) {
+            cat("✓ DESeq2 results export successful\n")
+            cat("  - CSV files, tables, volcano plots, and heatmaps generated\n")
+        } else {
+            cat("✗ DESeq2 results export returned NULL\n")
+        }
+    } else {
+        cat("✗ export_all_result_types function not found\n")
+    }
+    
+}, error = function(e) {
+    cat("✗ Error in DESeq2 results export functions:", e$message, "\n")
+})
+
+cat("\n")
+
+# Test 7: Test PCA functions with real data
+cat("7. Testing PCA functions with real data...\n")
 tryCatch({
     if (exists("perform_pca_analysis")) {
         # Load the real assay data for PCA
         real_assay_data <- read.csv("input_data/PLX073248_assay_data.csv", stringsAsFactors = FALSE)
         
-        # Test PCA analysis with real data (using group names as they would be parsed from sample names)
+        # Test PCA analysis with real data (using actual condition names from sample data)
         pca_results <- perform_pca_analysis(
             data = real_assay_data,
-            groups_to_include = c("Veh", "Ket_500"),  # These are the group names after removing replicate numbers
+            groups_to_include = c("Vehicle", "Ketamine_500"),  # Use actual condition names from sample data
             experiment_name = experiment_name,
             save_results = TRUE
         )
@@ -239,8 +293,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 7: Test GSEA functions with real data
-cat("7. Testing GSEA functions with real data...\n")
+# Test 8: Test GSEA functions with real data
+cat("8. Testing GSEA functions with real data...\n")
 tryCatch({
     if (exists("run_gsea_analysis")) {
         # Test GSEA analysis with real data
@@ -248,8 +302,7 @@ tryCatch({
             experiment_name = experiment_name,
             model_type = "deseq2",
             rank_method = "sign_log_padj",
-            collections = c("H"),  # Just test Hallmark collection
-            interactive = FALSE # Non-interactive for demo
+            collections = c("H")  # Just test Hallmark collection
         )
         
         if (!is.null(gsea_results)) {
@@ -268,8 +321,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 8: Test mapping functions with real data
-cat("8. Testing mapping functions with real data...\n")
+# Test 9: Test mapping functions with real data
+cat("9. Testing mapping functions with real data...\n")
 tryCatch({
     if (exists("map_xenopus_to_human")) {
         # Get some real gene symbols from the data
@@ -304,8 +357,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 9: Test additional analysis functions
-cat("9. Testing additional analysis functions...\n")
+# Test 10: Test additional analysis functions
+cat("10. Testing additional analysis functions...\n")
 tryCatch({
     # Test DESeq2 diagnostics if available
     if (exists("generate_deseq2_diagnostics")) {
@@ -333,8 +386,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 10: Check output files and directories
-cat("10. Checking output files and directories...\n")
+# Test 11: Check output files and directories
+cat("11. Checking output files and directories...\n")
 tryCatch({
     # Check if data directory was created
     # data_dir already defined at top of script
@@ -378,8 +431,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 11: Run package tests
-cat("11. Running package tests...\n")
+# Test 12: Run package tests
+cat("12. Running package tests...\n")
 tryCatch({
     # Run testthat tests
     test_results <- test_dir("tests", reporter = "summary")
@@ -391,8 +444,8 @@ tryCatch({
 
 cat("\n")
 
-# Test 12: Check package structure
-cat("12. Checking package structure...\n")
+# Test 13: Check package structure
+cat("13. Checking package structure...\n")
 tryCatch({
     # Check DESCRIPTION file
     if (file.exists("DESCRIPTION")) {
