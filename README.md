@@ -218,19 +218,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Citation
-
-If you use this package in your research, please cite:
-
-```
-Grossberg, A. (2024). transcriptomicsPipeline: A comprehensive R package for transcriptomics data analysis. 
-https://github.com/agrossberg/transcriptomics_pipeline
-```
-
-## Support
-
-For questions, issues, or feature requests, please open an issue on the [GitHub repository](https://github.com/agrossberg/transcriptomics_pipeline/issues).
-
 ## Author
 
 **Allison Grossberg**  

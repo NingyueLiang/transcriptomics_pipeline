@@ -2,7 +2,7 @@ Package: transcriptomicsPipeline
 Type: Package
 Title: Comprehensive Transcriptomics Analysis Pipeline
 Version: 1.0.0
-Authors@R: person("Allison Grossberg", email = "allison.grossberg@wyss.harvard.edu", role = c("aut", "cre"))
+Authors@R: c(person("Allison Grossberg", email = "allison.grossberg@wyss.harvard.edu", role = c("aut", "cre")))
 Description: A comprehensive R package for transcriptomics data analysis including data import, cleaning, differential expression analysis, gene mapping, PCA, and gene set enrichment analysis. Supports both Pluto API and local data sources.
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -56,5 +56,3 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle
-Vignettes:
-    transcriptomicsPipeline-vignette.Rmd
