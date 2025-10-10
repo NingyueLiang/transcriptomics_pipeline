@@ -879,7 +879,7 @@ run_deseq2_analysis <- function(experiment_name,
     message("Results saved to: ", results_file)
     
     # Generate summary
-    save_analysis_summary(results, experiment_name, results_dir)
+    save_analysis_summary(results, experiment_name)
     
     return(results)
 }

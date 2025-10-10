@@ -250,21 +250,9 @@ tryCatch({
         real_assay_data <- read.csv("input_data/PLX073248_assay_data.csv", stringsAsFactors = FALSE)
         test_genes <- head(real_assay_data$gene_symbol, 10)
         
-        # Create dummy mapping files for testing (since we don't have real mapping files)
-        xenbase_file <- file.path(demo_results, "dummy_xenbase.txt")
-        hcop_file <- file.path(demo_results, "dummy_hcop.txt")
-        
-        # Create dummy files with some of the real gene symbols
-        writeLines(c(
-            paste0(test_genes[1], "\tHUMAN_GENE1"),
-            paste0(test_genes[2], "\tHUMAN_GENE2"),
-            paste0(test_genes[3], "\tHUMAN_GENE3")
-        ), xenbase_file)
-        writeLines(c(
-            paste0(test_genes[1], "\tHUMAN_GENE1"),
-            paste0(test_genes[4], "\tHUMAN_GENE4"),
-            paste0(test_genes[5], "\tHUMAN_GENE5")
-        ), hcop_file)
+        # Use real mapping files
+        xenbase_file <- "input_files/Xenbase_Xenopus_Orthology_Predictions.txt"
+        hcop_file <- "input_files/HCOP_Xenopus_Orthology_Predictions.txt"
         
         mapping_results <- map_xenopus_to_human(
             xenopus_genes = test_genes,

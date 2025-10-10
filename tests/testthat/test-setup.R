@@ -1,6 +1,7 @@
-# Test setup functions
-test_that("setup_config is properly defined", {
-  expect_true(is.list(setup_config))
+library(testthat)
+library(transcriptomicsPipeline)
+
+test_that("setup_config is properly configured", {
   expect_true("cran_packages" %in% names(setup_config))
   expect_true("bioc_packages" %in% names(setup_config))
   expect_true(is.character(setup_config$cran_packages))

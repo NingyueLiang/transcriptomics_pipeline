@@ -29,8 +29,8 @@ import_config <- list(
     valid_species = c("xenopus", "human", "zebrafish", "mouse", "rat"),
     valid_data_types = c("transcriptomics", "genomics", "metabolomics", "proteomics", "scRNAseq"),
     default_paths = list(
-        xenbase_file = "pipeline_input_data_files/Xenbase_Xenopus_Orthology_Predictions.txt",
-        hcop_file = "pipeline_input_data_files/HCOP_Xenopus_Orthology_Predictions.txt"
+        xenbase_file = "input_files/Xenbase_Xenopus_Orthology_Predictions.txt",
+        hcop_file = "input_files/HCOP_Xenopus_Orthology_Predictions.txt"
     )
 )
 
