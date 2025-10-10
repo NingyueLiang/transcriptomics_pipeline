@@ -1,0 +1,60 @@
+Package: transcriptomicsPipeline
+Type: Package
+Title: Comprehensive Transcriptomics Analysis Pipeline
+Version: 1.0.0
+Authors@R: person("Allison Grossberg", email = "allison.grossberg@wyss.harvard.edu", role = c("aut", "cre"))
+Description: A comprehensive R package for transcriptomics data analysis including data import, cleaning, differential expression analysis, gene mapping, PCA, and gene set enrichment analysis. Supports both Pluto API and local data sources.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 4.0.0)
+Imports:
+    dplyr,
+    tidyr,
+    readr,
+    magrittr,
+    tibble,
+    stringr,
+    here,
+    logger,
+    jsonlite,
+    cli,
+    flextable,
+    officer,
+    ggplot2,
+    ggsignif,
+    rstatix,
+    ggraph,
+    tidygraph,
+    igraph,
+    viridis,
+    circlize,
+    grid,
+    RColorBrewer,
+    UpSetR,
+    purrr,
+    pluto,
+    scales,
+    stats,
+    edgeR,
+    DESeq2,
+    ComplexHeatmap,
+    limma,
+    TPP,
+    MSnbase,
+    msigdbr,
+    fgsea,
+    STRINGdb,
+    org.Hs.eg.db,
+    AnnotationDbi,
+    rentrez,
+    fs
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    BiocStyle
+Vignettes:
+    transcriptomicsPipeline-vignette.Rmd

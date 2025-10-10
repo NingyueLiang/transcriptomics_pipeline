@@ -1,0 +1,45 @@
+# R package files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Package build artifacts
+*.tar.gz
+*.zip
+.Rbuildignore
+
+# Documentation
+docs/
+vignettes/*.html
+vignettes/*.pdf
+
+# Test results
+tests/testthat/_snaps/
+tests/testthat/testthat.Rout*
+
+# Data files (large files should not be in git)
+data/
+results/
+*.rds
+*.csv
+*.txt
+*.xlsx
+*.docx
+
+# Temporary files
+*.tmp
+*.temp
+.Renviron
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Package installation
+.Rinstignore
