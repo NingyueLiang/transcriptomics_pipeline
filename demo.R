@@ -1,9 +1,8 @@
 #!/usr/bin/env Rscript
 
-#' Real Data Demo Script for transcriptomicsPipeline Package
+#' Demo Script for transcriptomicsPipeline
 #' 
-#' This script demonstrates the functionality of the transcriptomicsPipeline package
-#' using real test data from the input_data directory.
+#' Demonstrates package functionality using Xenopus anesthetic response data.
 
 # Load required libraries
 suppressPackageStartupMessages({
@@ -170,17 +169,21 @@ cat("\n")
 cat("5. Testing differential expression functions with real data...\n")
 tryCatch({
     if (exists("run_deseq2_analysis")) {
-        # Test DESeq2 analysis with real data (non-interactive)
+        # Run DESeq2 analysis with combined contrasts for within-group comparisons
         de_results <- run_deseq2_analysis(
             experiment_name = experiment_name,
-            comparison_cols = c("condition"),
-            reference_levels = list(condition = c("Vehicle")),  # Use actual condition name
+            comparison_cols = c("condition", "timepoint"),  # Use both columns to generate combined contrasts
+            reference_levels = list(
+                condition = c("Vehicle"),  # Use Vehicle as reference
+                timepoint = c("T")         # Use T as reference for timepoint comparisons
+            ),
             interactive = FALSE  # Non-interactive for demo
         )
         
         if (!is.null(de_results) && length(de_results) > 0) {
             cat("✓ Real data differential expression analysis successful\n")
             cat("  - Number of contrasts:", length(de_results), "\n")
+            cat("  - Analysis includes both T and R timepoints as separate groups\n")
             for (contrast_name in names(de_results)) {
                 if (!is.null(de_results[[contrast_name]]$deseq_results)) {
                     n_sig <- sum(de_results[[contrast_name]]$deseq_results$padj < 0.05, na.rm = TRUE)
@@ -204,16 +207,18 @@ cat("\n")
 cat("5.5. Testing DESeq2 diagnostics functions...\n")
 tryCatch({
     if (exists("generate_deseq2_diagnostics")) {
-        # Test DESeq2 diagnostics generation
+        # Test DESeq2 diagnostics generation with all plot types
         diagnostics_results <- generate_deseq2_diagnostics(
             experiment_name = experiment_name,
             analysis_type = "simple",
-            plot_types = c("dispersion", "ma", "pvalue_histogram")
+            plot_types = c("dispersion", "ma", "pvalue_histogram", "cooks_distance", "pca", "mean_variance", "size_factors", "sample_distances")
         )
         
         if (!is.null(diagnostics_results)) {
             cat("✓ DESeq2 diagnostics generation successful\n")
-            cat("  - Diagnostic plots generated for simple analysis\n")
+            cat("  - All diagnostic plots generated as PNG files\n")
+            cat("  - Comprehensive diagnostic reports generated as Word documents\n")
+            cat("  - Diagnostic statistics saved as RDS files\n")
         } else {
             cat("✗ DESeq2 diagnostics generation returned NULL\n")
         }
@@ -264,16 +269,22 @@ tryCatch({
         # Load the real assay data for PCA
         real_assay_data <- read.csv("input_data/PLX073248_assay_data.csv", stringsAsFactors = FALSE)
         
+        # Load the real sample data for PCA metadata
+        real_sample_data <- read.csv("input_data/PLX073248_sample_data.csv", stringsAsFactors = FALSE)
+        
         # Test PCA analysis with real data (using actual condition names from sample data)
+        # Include both T and R timepoints to properly handle all groups
         pca_results <- perform_pca_analysis(
             data = real_assay_data,
-            groups_to_include = c("Vehicle", "Ketamine_500"),  # Use actual condition names from sample data
+            groups_to_include = c("Vehicle", "Ketamine_500", "Ketamine_100", "Etomidate_100", "Propofol_100"),  # Use actual condition names from sample data
             experiment_name = experiment_name,
-            save_results = TRUE
+            save_results = TRUE,
+            sample_metadata = real_sample_data  # Pass the actual sample metadata
         )
         
         if (!is.null(pca_results)) {
             cat("✓ Real data PCA analysis successful\n")
+            cat("  - Analysis includes all conditions with T and R timepoints\n")
             if (!is.null(pca_results$variance_explained)) {
                 cat("  - PC1 variance explained:", round(pca_results$variance_explained[1], 2), "%\n")
                 cat("  - PC2 variance explained:", round(pca_results$variance_explained[2], 2), "%\n")
@@ -297,11 +308,13 @@ cat("\n")
 cat("8. Testing GSEA functions with real data...\n")
 tryCatch({
     if (exists("run_gsea_analysis")) {
-        # Test GSEA analysis with real data
+        # Run GSEA analysis with gene mapping
         gsea_results <- run_gsea_analysis(
             experiment_name = experiment_name,
             model_type = "deseq2",
             rank_method = "sign_log_padj",
+            suffix_mode = "all",  # Use all genes (both .L and .S)
+            mapping_type = "clean",  # Use clean mapping results
             collections = c("H")  # Just test Hallmark collection
         )
         
@@ -321,31 +334,45 @@ tryCatch({
 
 cat("\n")
 
-# Test 9: Test mapping functions with real data
-cat("9. Testing mapping functions with real data...\n")
+# Test 9: Test mapping functions with real DE results
+cat("9. Testing mapping functions with real DE results...\n")
 tryCatch({
     if (exists("map_xenopus_to_human")) {
-        # Get some real gene symbols from the data
+        # Load the DE results to get significant genes
+        dea_results <- readRDS("results/xen_tran_2024_12/de/deseq2/simple/xen_tran_2024_12_de_results.rds")
+        
+        # Create complete gene mapping dictionary using all genes
         real_assay_data <- read.csv("input_data/PLX073248_assay_data.csv", stringsAsFactors = FALSE)
-        test_genes <- head(real_assay_data$gene_symbol, 10)
+        
+        # Use all genes from the assay data for mapping
+        # This gives us a complete dictionary that can be reused
+        all_genes <- real_assay_data$gene_symbol
+        
+        cat("  - Using all", length(all_genes), "genes from assay data for complete mapping dictionary\n")
+        cat("  - First few genes:", paste(head(all_genes, 5), collapse = ", "), "\n")
         
         # Use real mapping files
         xenbase_file <- "input_files/Xenbase_Xenopus_Orthology_Predictions.txt"
         hcop_file <- "input_files/HCOP_Xenopus_Orthology_Predictions.txt"
         
         mapping_results <- map_xenopus_to_human(
-            xenopus_genes = test_genes,
+            xenopus_genes = all_genes,
             xenbase_file = xenbase_file,
             hcop_file = hcop_file,
-            suffix_mode = "all"
+            suffix_mode = "all",
+            de_results = dea_results,  # Pass the actual DE results
+            experiment_name = experiment_name,
+            model_type = "deseq2"
         )
         
-        if (!is.null(mapping_results)) {
-            cat("✓ Real data gene mapping successful\n")
-            cat("  - Input genes:", length(test_genes), "\n")
-            cat("  - Mapped genes:", nrow(mapping_results), "\n")
+        if (!is.null(mapping_results) && !is.null(mapping_results$data)) {
+            cat("✓ Complete gene mapping dictionary created successfully\n")
+            cat("  - Input genes:", length(all_genes), "\n")
+            cat("  - Mapped genes:", nrow(mapping_results$data), "\n")
+            cat("  - This creates a reusable dictionary for all future analyses\n")
+            cat("  - All genes from DEA analysis are mapped, not just significant ones\n")
         } else {
-            cat("✗ Real data gene mapping returned NULL\n")
+            cat("✗ Gene mapping returned NULL or empty data\n")
         }
     } else {
         cat("✗ map_xenopus_to_human function not found\n")

@@ -1,8 +1,6 @@
-#' DESeq2 Results Export Functions
+#' Results Export Functions
 #' 
-#' This module provides functions for exporting DESeq2 results in multiple formats
-#' including CSV files, formatted tables, volcano plots, and heatmaps with comprehensive
-#' error handling and validation.
+#' Export DESeq2 results as CSV files, tables, and plots.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -134,8 +132,10 @@ create_output_directories <- function(experiment_name, analysis_type) {
     dir_paths <- list()
     for (d in dirs) {
         dir_path <- file.path(base_dir, d)
-        if (!dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)) {
-            stop("Failed to create directory: ", dir_path)
+        if (!dir.exists(dir_path)) {
+            if (!dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)) {
+                stop("Failed to create directory: ", dir_path)
+            }
         }
         dir_paths[[d]] <- dir_path
     }
@@ -362,9 +362,14 @@ create_de_table <- function(result, direction = "both", n_genes = NULL,
     dds <- result$dds
     comparison_info <- result$comparison_info
     
-    # Get normalized counts using VST
-    vst_counts <- DESeq2::vst(dds, blind = FALSE)
-    normalized_counts <- SummarizedExperiment::assay(vst_counts)
+  # Get normalized counts using VST
+  vst_counts <- DESeq2::vst(dds, blind = FALSE)
+  normalized_counts <- SummarizedExperiment::assay(vst_counts)
+  
+  # Handle missing rownames in normalized counts - use actual row indices for consistency
+  if (length(rownames(normalized_counts)) == 0) {
+    rownames(normalized_counts) <- as.character(1:nrow(normalized_counts))
+  }
     
     # Get experimental and control samples
     experimental <- gsub(paste0(comparison_info$variable, "_"), "", comparison_info$experimental)
@@ -373,11 +378,20 @@ create_de_table <- function(result, direction = "both", n_genes = NULL,
     experimental_samples <- rownames(colData(dds))[colData(dds)[[comparison_info$variable]] == experimental]
     control_samples <- rownames(colData(dds))[colData(dds)[[comparison_info$variable]] == control]
     
-    # Convert DESeqResults to data frame
-    res_df <- as.data.frame(deseq_result) %>%
-        tibble::rownames_to_column("Gene") %>%
-        dplyr::filter(!is.na(padj), padj < min_padj, abs(log2FoldChange) >= min_log2fc) %>%
-        dplyr::select(Gene, log2FoldChange, pvalue, padj)
+  # Convert DESeqResults to data frame
+  res_df <- as.data.frame(deseq_result)
+  
+  # Handle missing rownames - use actual row indices for consistency
+  if (length(rownames(res_df)) == 0) {
+    # Use row indices as gene names (these should match the original data)
+    res_df$Gene <- as.character(1:nrow(res_df))
+  } else {
+    res_df$Gene <- rownames(res_df)
+  }
+  
+  res_df <- res_df %>%
+    dplyr::filter(!is.na(padj), padj < min_padj, abs(log2FoldChange) >= min_log2fc) %>%
+    dplyr::select(Gene, log2FoldChange, pvalue, padj)
     
     if (direction == "up") {
         res_df <- dplyr::filter(res_df, log2FoldChange > 0)
@@ -392,6 +406,16 @@ create_de_table <- function(result, direction = "both", n_genes = NULL,
     }
     
     if (nrow(res_df) > 0) {
+        # Check if genes exist in normalized counts
+        available_genes <- intersect(res_df$Gene, rownames(normalized_counts))
+        if (length(available_genes) == 0) {
+            warning("No genes from results found in normalized counts matrix")
+            return(NULL)
+        }
+        
+        # Filter to only available genes
+        res_df <- res_df[res_df$Gene %in% available_genes, ]
+        
         exp_means <- rowMeans(normalized_counts[res_df$Gene, experimental_samples, drop = FALSE])
         ctrl_means <- rowMeans(normalized_counts[res_df$Gene, control_samples, drop = FALSE])
         
@@ -570,9 +594,17 @@ create_volcano_data <- function(result) {
     # Extract results
     res <- result$deseq_result
     
+    # Handle case where rownames are missing
+    if (length(rownames(res)) == 0) {
+        # Use row indices as gene names
+        gene_names <- paste0("Gene_", 1:nrow(res))
+    } else {
+        gene_names <- rownames(res)
+    }
+    
     # Create data frame
     plot_data <- data.frame(
-        gene = rownames(res),
+        gene = gene_names,
         log2FoldChange = res$log2FoldChange,
         padj = res$padj,
         stringsAsFactors = FALSE
@@ -722,14 +754,24 @@ create_volcano_plot <- function(plot_data, title, n_labels = 15, analysis_type =
     
     # Get top up-regulated genes (sorted by significance then fold change)
     up_genes <- sig_genes[sig_genes$log2FoldChange > 0, ]
-    up_genes <- up_genes[order(up_genes$padj, -up_genes$log2FoldChange)[1:min(15, nrow(up_genes))], ]
+    if (nrow(up_genes) > 0) {
+        up_genes <- up_genes[order(up_genes$padj, -up_genes$log2FoldChange)[1:min(15, nrow(up_genes))], ]
+    }
     
     # Get top down-regulated genes (sorted by significance then fold change)
     down_genes <- sig_genes[sig_genes$log2FoldChange < 0, ]
-    down_genes <- down_genes[order(down_genes$padj, down_genes$log2FoldChange)[1:min(15, nrow(down_genes))], ]
+    if (nrow(down_genes) > 0) {
+        down_genes <- down_genes[order(down_genes$padj, down_genes$log2FoldChange)[1:min(15, nrow(down_genes))], ]
+    }
     
-    # Combine top up and down genes
-    top_genes <- rbind(up_genes, down_genes)
+    # Combine top up and down genes safely
+    top_genes <- data.frame()
+    if (nrow(up_genes) > 0) {
+        top_genes <- rbind(top_genes, up_genes)
+    }
+    if (nrow(down_genes) > 0) {
+        top_genes <- rbind(top_genes, down_genes)
+    }
     
     # Add gene labels
     if (nrow(top_genes) > 0) {
@@ -773,6 +815,13 @@ generate_volcano_plot <- function(result, experiment_obj, n_labels = 15,
     dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
     
     plot_data <- create_volcano_data(result)
+    
+    # Check if plot_data is valid
+    if (is.null(plot_data) || nrow(plot_data) == 0) {
+        warning("No data available for volcano plot for ", contrast_name)
+        return(NULL)
+    }
+    
     plot_result <- create_volcano_plot(
         plot_data, paste("Volcano Plot:", contrast_name),
         n_labels, analysis_type
@@ -780,11 +829,11 @@ generate_volcano_plot <- function(result, experiment_obj, n_labels = 15,
     
     filename <- file.path(
         plots_dir,
-        paste0(contrast_name, "_volcano_labels", n_labels, ".pdf")
+        paste0(contrast_name, "_volcano_labels", n_labels, ".png")
     )
     
     ggplot2::ggsave(filename, plot_result$plot,
-        width = plot_result$width, height = plot_result$height
+        width = plot_result$width, height = plot_result$height, dpi = 300
     )
     return(plot_result$plot)
 }
@@ -797,10 +846,20 @@ generate_volcano_plot <- function(result, experiment_obj, n_labels = 15,
 #' @param scale Whether to scale data
 #' @return Heatmap data
 create_heatmap_data <- function(deseq_results, min_padj = 0.05, direction = "both",
-                              n_genes = NULL, scale = TRUE) {
+                                n_genes = NULL, scale = TRUE) {
     vst_counts <- DESeq2::vst(deseq_results$dds, blind = FALSE)
     norm_counts <- SummarizedExperiment::assay(vst_counts)
     res_df <- as.data.frame(deseq_results$deseq_result)
+    
+    # Handle missing rownames - use actual row indices for consistency
+    if (length(rownames(res_df)) == 0) {
+        rownames(res_df) <- as.character(1:nrow(res_df))
+    }
+    
+    # Handle missing rownames in normalized counts
+    if (length(rownames(norm_counts)) == 0) {
+        rownames(norm_counts) <- as.character(1:nrow(norm_counts))
+    }
     
     # Filter by direction and significance
     if (direction == "up") {
@@ -1211,7 +1270,16 @@ generate_complex_heatmap <- function(result, experiment_obj, direction = "both",
     dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
     
     # Create heatmap data
-    heatmap_data <- create_heatmap_data(result, min_padj, direction, n_genes, scale)
+    heatmap_data <- tryCatch({
+        create_heatmap_data(result, min_padj, direction, n_genes, scale)
+    }, error = function(e) {
+        warning("Failed to create heatmap data for ", contrast_name, ": ", e$message)
+        return(NULL)
+    })
+    
+    if (is.null(heatmap_data)) {
+        return(NULL)
+    }
     
     if (analysis_type == "complex") {
         # Get the groups for this contrast
@@ -1258,13 +1326,13 @@ generate_complex_heatmap <- function(result, experiment_obj, direction = "both",
             min_padj,
             "_log2fc",
             min_log2fc,
-            "_heatmap.pdf"
+            "_heatmap.png"
         )
     )
     
-    # Save the heatmap
+    # Save the heatmap as PNG
     tryCatch({
-        pdf(filename, width = hm_result$width, height = hm_result$height)
+        png(filename, width = hm_result$width * 100, height = hm_result$height * 100, res = 300)
         ComplexHeatmap::draw(hm_result$heatmap)
         dev.off()
     }, error = function(e) {

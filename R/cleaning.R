@@ -1,7 +1,6 @@
-#' Data Cleaning Functions for Drug Explorer Pipeline
+#' Data Cleaning Functions
 #' 
-#' This module provides functions for cleaning and preparing omics data
-#' for differential expression analysis with proper validation and error handling.
+#' Clean and prepare transcriptomics data for analysis.
 
 # Required libraries
 suppressPackageStartupMessages({

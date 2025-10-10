@@ -28,6 +28,27 @@ results/
 *.xlsx
 *.docx
 
+# Plot files
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.svg
+*.eps
+*.tiff
+*.bmp
+
+# Analysis output files
+*.log
+*.out
+*.err
+
+# Input data files (keep structure but not actual data)
+input_data/*.csv
+input_data/*.txt
+input_data/*.xlsx
+input_files/*.txt
+
 # Temporary files
 *.tmp
 *.temp

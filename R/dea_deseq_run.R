@@ -1,7 +1,6 @@
-#' Simple DESeq2 Analysis Functions
+#' Differential Expression Analysis
 #' 
-#' This module provides functions for differential expression analysis using DESeq2
-#' with comprehensive error handling, validation, and modular design.
+#' DESeq2-based differential expression analysis functions.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -462,13 +461,17 @@ process_combined_variable_contrasts <- function(metadata_df, comparison_cols, re
                                               interactive, contrast_filters, experimental_levels) {
     contrasts <- list()
     
-    if (length(comparison_cols) <= 1 || !interactive) {
+    if (length(comparison_cols) <= 1) {
         return(contrasts)
     }
     
-    message("\nWould you like to generate contrasts holding other variables constant? (y/n): ")
-    if (tolower(readline()) != "y") {
-        return(contrasts)
+    if (interactive) {
+        message("\nWould you like to generate contrasts holding other variables constant? (y/n): ")
+        if (tolower(readline()) != "y") {
+            return(contrasts)
+        }
+    } else {
+        message("\nGenerating combined contrasts in non-interactive mode...")
     }
     
     # Create a temporary combined column
@@ -841,35 +844,23 @@ run_deseq2_analysis <- function(experiment_name,
     
     # Run DESeq2 for each contrast using flexible function
     results <- list()
-    for (contrast in contrasts) {
+    for (contrast_name in names(contrasts)) {
+        contrast <- contrasts[[contrast_name]]
         tryCatch({
-            # Prepare data for this contrast
-            comparison_data <- prepare_comparison_data(
-                counts_matrix, sample_info, 
-                list(variable = contrast$variable, filter_patterns = filter_patterns)
-            )
-            
-            # Create DESeqDataSet
-            dds <- DESeqDataSetFromMatrix(
-                countData = comparison_data$counts,
-                colData = comparison_data$metadata,
-                design = comparison_data$design
-            )
-            
-            # Run flexible DESeq2 analysis
+            # Run flexible DESeq2 analysis directly
             result <- run_flexible_deseq2(
-                counts_matrix = comparison_data$counts,
-                sample_info = comparison_data$sample_info,
+                counts_matrix = counts_matrix,
+                sample_info = sample_info,
                 comparison = contrast,
                 min_count = 10,
                 min_sample_percent = 0.25
             )
             
             if (!is.null(result)) {
-                results[[contrast$name]] <- result
+                results[[contrast_name]] <- result
             }
         }, error = function(e) {
-            warning("Failed to analyze contrast '", contrast$name, "': ", e$message)
+            warning("Failed to analyze contrast '", contrast_name, "': ", e$message)
         })
     }
     

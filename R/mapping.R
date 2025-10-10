@@ -1,7 +1,6 @@
-#' Gene Mapping Functions for Drug Explorer Pipeline
+#' Gene Mapping Functions
 #' 
-#' This module provides functions for mapping Xenopus genes to human orthologs
-#' using Xenbase and HCOP databases, with comprehensive error handling and validation.
+#' Map Xenopus genes to human orthologs using Xenbase and HCOP databases.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -345,10 +344,15 @@ get_hugo_symbols <- function(xenbase_initial, hcop_initial) {
 #' @return Processed gene mapping data frame
 merge_and_process_mappings <- function(xenbase_initial, hcop_initial, hugo_symbols) {
     # Merge Xenbase and HCOP data
-    xenbase_hcop_merge <- bind_rows(
-        xenbase_initial %>% mutate(source = "xenbase"),
-        hcop_initial %>% mutate(source = "hcop")
-    ) %>%
+    # Ensure consistent data types before combining
+    xenbase_initial$source <- "xenbase"
+    hcop_initial$source <- "hcop"
+    
+    # Ensure human_entrez_id is character in both data frames
+    xenbase_initial$human_entrez_id <- as.character(xenbase_initial$human_entrez_id)
+    hcop_initial$human_entrez_id <- as.character(hcop_initial$human_entrez_id)
+    
+    xenbase_hcop_merge <- bind_rows(xenbase_initial, hcop_initial) %>%
         distinct()
 
     # Add HUGO symbols
@@ -562,6 +566,33 @@ map_xenopus_to_human <- function(xenopus_genes,
     enhanced_symbols <- enhance_original_symbols(gene_data$original_symbols, 
                                                 merged_data_clean, 
                                                 gene_entrez_hugo_df)
+    
+    # Save results if experiment_name and model_type are provided
+    if (!is.null(experiment_name) && !is.null(model_type)) {
+        tryCatch({
+            results_dir <- here("results", experiment_name, "mapping", model_type, suffix_mode)
+            if (!dir.exists(results_dir)) {
+                dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+            }
+            
+            # Save the complete results
+            results_file <- file.path(results_dir, paste0(experiment_name, "_", suffix_mode, "_", model_type, "_results.rds"))
+            saveRDS(list(
+                data = merged_data_clean,
+                original_symbols = enhanced_symbols
+            ), results_file)
+            
+            # Save just the mapping data as CSV for easy viewing
+            if (nrow(merged_data_clean) > 0) {
+                csv_file <- file.path(results_dir, paste0(experiment_name, "_", suffix_mode, "_", model_type, "_mapping.csv"))
+                write.csv(merged_data_clean, csv_file, row.names = FALSE)
+            }
+            
+            message("Mapping results saved to: ", results_dir)
+        }, error = function(e) {
+            warning("Failed to save mapping results: ", e$message)
+        })
+    }
     
     # Return results
     return(list(

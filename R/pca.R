@@ -1,7 +1,6 @@
-#' Principal Component Analysis Functions
+#' Principal Component Analysis
 #' 
-#' This module provides functions for performing Principal Component Analysis (PCA)
-#' on gene expression data with comprehensive error handling and optimization.
+#' PCA analysis and visualization for transcriptomics data.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -62,8 +61,9 @@ validate_pca_params <- function(data, groups_to_include, min_cpm, n_top_features
 #' Parse sample information from column names
 #' @param data Input data frame
 #' @param groups_to_include Groups to include
+#' @param sample_metadata Optional sample metadata data frame
 #' @return List containing filtered data and sample info
-parse_sample_info <- function(data, groups_to_include = NULL) {
+parse_sample_info <- function(data, groups_to_include = NULL, sample_metadata = NULL) {
     # Get sample columns
     sample_cols <- colnames(data)[!colnames(data) %in% "gene_symbol"]
     
@@ -71,12 +71,33 @@ parse_sample_info <- function(data, groups_to_include = NULL) {
         stop("No sample columns found in data")
     }
     
-    # Create sample info data frame
-    sample_info <- data.frame(
-        sample_name = sample_cols,
-        group = gsub("_[0-9]+$", "", sample_cols),  # Remove replicate numbers
-        stringsAsFactors = FALSE
-    )
+    # Use provided sample metadata if available
+    if (!is.null(sample_metadata)) {
+        # Match sample columns to metadata
+        sample_info <- sample_metadata[sample_metadata$sample_id %in% sample_cols, ]
+        
+        if (nrow(sample_info) == 0) {
+            stop("No matching samples found in metadata")
+        }
+        
+        # Use condition as group if available
+        if ("condition" %in% colnames(sample_info)) {
+            sample_info$group <- sample_info$condition
+        } else {
+            # Fallback to parsing from sample names
+            sample_info$group <- gsub("_[0-9]+$", "", sample_info$sample_id)
+        }
+        
+        # Rename sample_id to sample_name for consistency
+        sample_info$sample_name <- sample_info$sample_id
+    } else {
+        # Create sample info data frame from column names
+        sample_info <- data.frame(
+            sample_name = sample_cols,
+            group = gsub("_[0-9]+$", "", sample_cols),  # Remove replicate numbers
+            stringsAsFactors = FALSE
+        )
+    }
     
     # Filter groups if specified
     if (!is.null(groups_to_include)) {
@@ -276,8 +297,10 @@ create_pca_plot <- function(pca_result, sample_info, variance_explained,
 #' @param output_dir Output directory
 #' @param experiment_name Experiment name
 save_pca_results <- function(results, output_dir, experiment_name) {
-    if (!dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)) {
-        stop("Failed to create output directory: ", output_dir)
+    if (!dir.exists(output_dir)) {
+        if (!dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)) {
+            stop("Failed to create output directory: ", output_dir)
+        }
     }
     
     tryCatch({
@@ -320,7 +343,8 @@ perform_pca_analysis <- function(data,
                                 n_top_features = pca_config$default_n_top_features,
                                 experiment_name = NULL,
                                 save_results = FALSE,
-                                output_dir = NULL) {
+                                output_dir = NULL,
+                                sample_metadata = NULL) {
     
     # Validate parameters
     validate_pca_params(data, groups_to_include, min_cpm, n_top_features)
@@ -331,7 +355,7 @@ perform_pca_analysis <- function(data,
     }
     
     # Parse sample information
-    parsed_data <- parse_sample_info(data, groups_to_include)
+    parsed_data <- parse_sample_info(data, groups_to_include, sample_metadata)
     filtered_data <- parsed_data$data
     sample_info <- parsed_data$sample_info
     

@@ -1,7 +1,6 @@
-#' Gene Set Enrichment Analysis Functions
+#' Gene Set Enrichment Analysis
 #' 
-#' This module provides functions for performing Gene Set Enrichment Analysis (GSEA)
-#' using fgsea and MSigDB with comprehensive error handling and validation.
+#' GSEA analysis using MSigDB gene sets and fgsea.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -359,16 +358,9 @@ export_gsea_results <- function(gsea_results, output_dir, experiment_name, model
 #' @return Data frame with DE results
 load_de_data_for_gsea <- function(experiment_name, model_type, suffix_mode = NULL, 
                                  mapping_type = NULL) {
-    # Determine file path based on parameters
-    if (!is.null(suffix_mode) && !is.null(mapping_type)) {
-        # Mapped data
-        data_file <- here("results", experiment_name, "mapping", model_type, suffix_mode, 
-                         paste0(experiment_name, "_", suffix_mode, "_", mapping_type, "_results.rds"))
-    } else {
-        # Unmapped data (human)
-        data_file <- here("results", experiment_name, "de", model_type, "simple", 
-                         paste0(experiment_name, "_de_results.rds"))
-    }
+    # Always use unmapped DE results and apply mapping on the fly
+    data_file <- here("results", experiment_name, "de", model_type, "simple", 
+                     paste0(experiment_name, "_de_results.rds"))
     
     if (!file.exists(data_file)) {
         stop("Data file not found: ", data_file)
@@ -377,37 +369,62 @@ load_de_data_for_gsea <- function(experiment_name, model_type, suffix_mode = NUL
     tryCatch({
         data <- readRDS(data_file)
         
-        # Extract DE results based on data structure
-        if (!is.null(suffix_mode) && !is.null(mapping_type)) {
-            # Mapped data structure
-            if (is.list(data) && "de_results" %in% names(data)) {
-                de_data <- data$de_results
-            } else {
-                stop("Unexpected data structure for mapped results")
-            }
-        } else {
-            # Unmapped data structure
-            if (is.list(data) && length(data) > 0) {
-                # Get first contrast results
-                first_result <- data[[1]]
-                if (is.list(first_result) && "results" %in% names(first_result)) {
-                    de_data <- as.data.frame(first_result$results)
-                    de_data$hugo_symbol <- rownames(de_data)
+        # Extract DE results and apply mapping if needed
+        if (is.list(data) && length(data) > 0) {
+            # Get first contrast results
+            first_result <- data[[1]]
+            if (is.list(first_result) && "deseq_results" %in% names(first_result)) {
+                de_data <- as.data.frame(first_result$deseq_results)
+                # Handle case where rownames are missing
+                if (length(rownames(de_data)) == 0) {
+                    de_data$xenopus_symbol <- paste0("Gene_", 1:nrow(de_data))
                 } else {
-                    stop("Unexpected DE results structure")
+                    de_data$xenopus_symbol <- rownames(de_data)
+                }
+                
+                # Apply mapping if suffix_mode and mapping_type are provided
+                if (!is.null(suffix_mode) && !is.null(mapping_type)) {
+                    # Load mapping dictionary to convert Xenopus to human genes
+                    mapping_file <- here("results", experiment_name, "mapping", model_type, suffix_mode, 
+                                       paste0(experiment_name, "_", suffix_mode, "_", model_type, "_mapping.csv"))
+                    
+                    if (file.exists(mapping_file)) {
+                        mapping_dict <- read.csv(mapping_file, stringsAsFactors = FALSE)
+                        
+                        # Create clean gene symbols by removing suffixes for mapping
+                        de_data$clean_xenopus_symbol <- gsub("\\.L$", "", de_data$xenopus_symbol)
+                        de_data$clean_xenopus_symbol <- gsub("\\.S$", "", de_data$clean_xenopus_symbol)
+                        
+                        # Merge with mapping dictionary using clean symbols
+                        de_data <- merge(de_data, mapping_dict, 
+                                       by.x = "clean_xenopus_symbol", by.y = "gene", 
+                                       all.x = TRUE)
+                        
+                        # Use human symbol as hugo_symbol, fallback to xenopus if no mapping
+                        de_data$hugo_symbol <- ifelse(!is.na(de_data$hugo_symbol) & de_data$hugo_symbol != "", 
+                                                     de_data$hugo_symbol, de_data$xenopus_symbol)
+                        
+                        message("Applied mapping: ", sum(!is.na(de_data$hugo_symbol) & de_data$hugo_symbol != ""), 
+                               " genes mapped to human symbols")
+                    } else {
+                        warning("Mapping file not found: ", mapping_file, ". Using Xenopus symbols.")
+                        de_data$hugo_symbol <- de_data$xenopus_symbol
+                    }
+                } else {
+                    # No mapping requested, use xenopus symbols as hugo symbols
+                    de_data$hugo_symbol <- de_data$xenopus_symbol
                 }
             } else {
-                stop("No DE results found")
+                stop("Unexpected DE results structure")
             }
+        } else {
+            stop("No DE results found")
         }
         
         # Standardize column names
-        de_data <- de_data %>%
-            rename(
-                log2_fc = log2FoldChange,
-                p_value = pvalue,
-                adj_p_value = padj
-            )
+        colnames(de_data)[colnames(de_data) == "log2FoldChange"] <- "log2_fc"
+        colnames(de_data)[colnames(de_data) == "pvalue"] <- "p_value"
+        colnames(de_data)[colnames(de_data) == "padj"] <- "adj_p_value"
         
         message("Loaded DE data: ", nrow(de_data), " genes")
         return(de_data)

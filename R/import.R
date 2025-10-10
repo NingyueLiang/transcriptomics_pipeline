@@ -1,7 +1,6 @@
-#' Import Functions for Drug Explorer Pipeline
+#' Data Import Functions
 #' 
-#' This module provides functions for importing omics data from various sources
-#' including Pluto API and local files, with proper validation and error handling.
+#' Import transcriptomics data from local files or Pluto API.
 
 # Required libraries
 suppressPackageStartupMessages({
@@ -504,6 +503,8 @@ import_omics_data <- function(
             
             # Read assay data
             assay_data <- readr::read_csv(assay_path, show_col_types = FALSE)
+            # Convert tibble to data frame to allow rownames
+            assay_data <- as.data.frame(assay_data)
             
             # Validate assay data
             if (is.null(assay_data) || nrow(assay_data) == 0) {
@@ -526,6 +527,8 @@ import_omics_data <- function(
                     stop("Sample file not found: ", sample_path)
                 }
                 sample_data <- readr::read_csv(sample_path, show_col_types = FALSE)
+                # Convert tibble to data frame
+                sample_data <- as.data.frame(sample_data)
             }
             
         }, error = function(e) {
@@ -533,6 +536,11 @@ import_omics_data <- function(
         })
     }
 
+    # Set rownames of assay_data to gene symbols
+    if ("gene_symbol" %in% colnames(assay_data)) {
+        rownames(assay_data) <- assay_data$gene_symbol
+    }
+    
     # Create data dictionary
     data_dict <- create_data_dictionary(sample_data, assay_data)
     
