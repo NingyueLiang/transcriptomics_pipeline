@@ -19,16 +19,18 @@ vignettes/*.pdf
 tests/testthat/_snaps/
 tests/testthat/testthat.Rout*
 
-# Data files (large files should not be in git)
+# Data and results directories (never upload to GitHub)
 data/
 results/
+input_data/
+input_files/
+
+# Individual file types (backup protection)
 *.rds
 *.csv
 *.txt
 *.xlsx
 *.docx
-
-# Plot files
 *.png
 *.pdf
 *.jpg
@@ -37,17 +39,9 @@ results/
 *.eps
 *.tiff
 *.bmp
-
-# Analysis output files
 *.log
 *.out
 *.err
-
-# Input data files (keep structure but not actual data)
-input_data/*.csv
-input_data/*.txt
-input_data/*.xlsx
-input_files/*.txt
 
 # Temporary files
 *.tmp
