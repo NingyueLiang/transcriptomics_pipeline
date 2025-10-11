@@ -11,7 +11,8 @@ suppressPackageStartupMessages({
 })
 
 # Set working directory to package root
-setwd("/Users/wyssuser/Documents/Python Repositories/Pluto_Transcriptomics_Pipeline")
+# Note: Adjust this path as needed for your system
+setwd(here::here())
 
 # Load the package
 devtools::load_all()
