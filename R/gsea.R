@@ -159,6 +159,19 @@ calculate_rank_stat <- function(data, method = "log2fc") {
         }
     )
     
+    # Deduplicate gene names for fgsea (requires unique stats)
+    if (any(duplicated(names(rank_stat)))) {
+        dup_count <- sum(duplicated(names(rank_stat)))
+        message("Collapsing ", dup_count, " duplicated gene entries for GSEA statistics.")
+        rank_stat_tbl <- tibble(
+            gene = names(rank_stat),
+            score = as.numeric(rank_stat)
+        ) %>%
+            group_by(gene) %>%
+            summarize(score = mean(score, na.rm = TRUE), .groups = "drop")
+        rank_stat <- setNames(rank_stat_tbl$score, rank_stat_tbl$gene)
+    }
+    
     message("Final ranking statistic: ", length(rank_stat), " genes")
     return(rank_stat)
 }
