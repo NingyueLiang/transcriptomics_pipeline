@@ -58,3 +58,6 @@ Thumbs.db
 
 # Package installation
 .Rinstignore
+
+.env
+__pycache__/
