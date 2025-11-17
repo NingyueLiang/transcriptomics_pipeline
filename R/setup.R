@@ -10,7 +10,7 @@ setup_config <- list(
         # Network analysis and visualization
         "ggraph", "tidygraph", "igraph", "viridis",
         # Additional utilities
-        "purrr", "pluto", "tibble", "magrittr", "ggrepel",
+        "purrr", "tibble", "magrittr", "ggrepel",
         # Heatmap visualization
         "circlize", "grid", "RColorBrewer",
         # UpSet Plots
@@ -18,8 +18,9 @@ setup_config <- list(
         # R Environment set-up
         "jsonlite", "cli", "logger", "here"
     ),
-    bioc_packages = c("DESeq2", "ComplexHeatmap", "limma", "TPP", "MSnbase", 
-                     "msigdbr", "fgsea", "STRINGdb", "org.Hs.eg.db", "AnnotationDbi")
+    bioc_packages = c("DESeq2", "edgeR", "ComplexHeatmap", "limma", "TPP", "MSnbase", 
+                     "msigdbr", "fgsea", "STRINGdb", "org.Hs.eg.db", "AnnotationDbi"),
+    github_packages = c(pluto = "pluto-biosciences/pluto-sdk-r")
 )
 
 #' Install single package
@@ -59,6 +60,34 @@ install_single_package <- function(package_name, source = "cran") {
     })
 }
 
+#' Install GitHub package via remotes
+#' @param package_name Package name to check
+#' @param repo GitHub repo in owner/name format
+#' @return Success status
+install_github_package <- function(package_name, repo) {
+    if (is.null(package_name) || nchar(package_name) == 0) {
+        stop("package_name must be provided for GitHub install")
+    }
+    if (is.null(repo) || nchar(repo) == 0) {
+        stop("repo must be provided for GitHub install")
+    }
+    
+    tryCatch({
+        if (!requireNamespace(package_name, quietly = TRUE)) {
+            if (!requireNamespace("remotes", quietly = TRUE)) {
+                message("Installing remotes package for GitHub installs...")
+                install.packages("remotes", dependencies = TRUE)
+            }
+            message("Installing GitHub package: ", repo)
+            remotes::install_github(repo, dependencies = TRUE, quiet = TRUE)
+        }
+        return(requireNamespace(package_name, quietly = TRUE))
+    }, error = function(e) {
+        warning("Failed to install GitHub package ", package_name, ": ", e$message)
+        return(FALSE)
+    })
+}
+
 #' Install BiocManager if not available
 #' 
 #' @return Logical indicating success
@@ -92,7 +121,9 @@ setup_packages <- function(config = setup_config) {
         cran_success = character(0),
         cran_failed = character(0),
         bioc_success = character(0),
-        bioc_failed = character(0)
+        bioc_failed = character(0),
+        github_success = character(0),
+        github_failed = character(0)
     )
     
     # Install BiocManager first
@@ -120,18 +151,38 @@ setup_packages <- function(config = setup_config) {
         }
     }
     
+    # Install GitHub packages
+    if (!is.null(config$github_packages) && length(config$github_packages) > 0) {
+        message("Installing GitHub packages...")
+        for (pkg in names(config$github_packages)) {
+            repo <- config$github_packages[[pkg]]
+            if (install_github_package(pkg, repo)) {
+                results$github_success <- c(results$github_success, pkg)
+            } else {
+                results$github_failed <- c(results$github_failed, pkg)
+            }
+        }
+    }
+    
     # Print summary
     message("\n=== Installation Summary ===")
     message("CRAN packages - Success: ", length(results$cran_success), 
             ", Failed: ", length(results$cran_failed))
     message("Bioconductor packages - Success: ", length(results$bioc_success), 
             ", Failed: ", length(results$bioc_failed))
+    if (!is.null(config$github_packages) && length(config$github_packages) > 0) {
+        message("GitHub packages - Success: ", length(results$github_success),
+                ", Failed: ", length(results$github_failed))
+    }
     
     if (length(results$cran_failed) > 0) {
         warning("Failed CRAN packages: ", paste(results$cran_failed, collapse = ", "))
     }
     if (length(results$bioc_failed) > 0) {
         warning("Failed Bioconductor packages: ", paste(results$bioc_failed, collapse = ", "))
+    }
+    if (length(results$github_failed) > 0) {
+        warning("Failed GitHub packages: ", paste(results$github_failed, collapse = ", "))
     }
     
     return(results)
@@ -347,4 +398,3 @@ check_environment <- function() {
     
     return(status)
 }
-

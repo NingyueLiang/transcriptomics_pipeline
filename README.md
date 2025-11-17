@@ -25,6 +25,12 @@ git clone https://github.com/agrossberg/transcriptomics_pipeline.git
 R CMD INSTALL transcriptomics_pipeline
 ```
 
+> **Note:** Pluto API workflows depend on the [`pluto`](https://github.com/pluto-biosciences/pluto-sdk-r) package, which the environment setup script installs automatically from GitHub. To install manually:
+> ```r
+> install.packages("devtools")      # or remotes
+> remotes::install_github("pluto-biosciences/pluto-sdk-r")
+> ```
+
 ## Quick Start
 
 ```r
@@ -74,6 +80,37 @@ gsea_results <- run_gsea_analysis(
     collections = c("H", "C2", "C5")
 )
 ```
+
+## Automated Python Agent
+
+A Python agent located in `scripts/pipeline_agent.py` automates the full workflow:
+
+1. **Activate the required conda environment**  
+   ```bash
+   conda activate ma4bio
+   pip install litellm  # and any other Python deps you need
+   export LITELLM_API_KEY=...  # or whichever env var Together uses in your setup
+   ```
+
+2. **Run the orchestrator (from the repo root)**  
+   ```bash
+   python scripts/pipeline_agent.py \
+     --experiment-name xen_tran_2024_12 \
+     --assay-file data/PLX073248_assay_data.csv \
+     --sample-file data/PLX073248_sample_data.csv
+   ```
+
+   - `scripts/setup_r_env.R` is called automatically to create/refresh the R environment (packages + directories).
+   - `scripts/run_r_pipeline.R` ingests the data in `data/`, runs import → cleaning → DESeq2 → mapping → GSEA, and writes a summary JSON to `results/<experiment>/pipeline_summary.json`.
+   - The agent then calls the Together-hosted `together_ai/Qwen/Qwen3-Next-80B-A3B-Instruct` model via `litellm` to draft a markdown report stored at `results/<experiment>/llm_report.md`.
+
+3. **Optional flags**
+
+   - `--skip-r-setup` skips the R bootstrap step if packages are already installed.
+   - `--skip-llm` runs the analytics but omits the LLM call (useful for offline testing).
+   - `--collections`, `--suffix-mode`, `--reference-condition`, and `--reference-timepoint` allow you to override the defaults passed to the R scripts.
+
+All intermediate data required by the pipeline (assay, metadata, orthology files) is expected inside the `data/` directory supplied with this repository.
 
 ## Data Requirements
 
