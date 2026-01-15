@@ -74,17 +74,12 @@ option_list <- list(
     make_option("--base-dir",
         type = "character",
         default = repo_root,
-        help = "Base directory for creating standard data/results folders [default: %default]"
+        help = "Base directory for the project [default: %default]"
     ),
     make_option("--skip-packages",
         action = "store_true",
         default = FALSE,
         help = "Skip installing R dependencies"
-    ),
-    make_option("--skip-directories",
-        action = "store_true",
-        default = FALSE,
-        help = "Skip creating the standard directory tree"
     ),
     make_option("--output",
         type = "character",
@@ -103,12 +98,10 @@ if (install_packages) {
     message("Skipping dependency installation (--skip-packages).")
 }
 load_pipeline_functions()
-create_directories <- !isTRUE(opt$`skip-directories`)
 
-message("Creating transcriptomics analysis environment...")
+message("Setting up transcriptomics analysis environment...")
 results <- create_transcriptomics_environment(
     install_packages = install_packages,
-    create_directories = create_directories,
     base_dir = opt$`base-dir`
 )
 

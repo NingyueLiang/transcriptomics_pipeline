@@ -189,28 +189,26 @@ setup_packages <- function(config = setup_config) {
 }
 
 #' Create a reusable R environment for transcriptomics analysis
-#' 
-#' This function sets up a complete R environment with all required packages
-#' and creates necessary directory structures for transcriptomics analysis.
-#' 
+#'
+#' This function sets up a complete R environment with all required packages.
+#'
 #' @param install_packages Whether to install packages (default: TRUE)
-#' @param create_directories Whether to create standard directory structure (default: TRUE)
+#' @param create_directories Deprecated, ignored
 #' @param base_dir Base directory for the project (default: current working directory)
 #' @return List with setup results and environment information
 #' @export
-create_transcriptomics_environment <- function(install_packages = TRUE, 
+create_transcriptomics_environment <- function(install_packages = TRUE,
                                              create_directories = TRUE,
                                              base_dir = getwd()) {
     message("Setting up transcriptomics analysis environment...")
-    
+
     # Initialize results list
     setup_results <- list(
         packages_installed = FALSE,
-        directories_created = FALSE,
         environment_info = list(),
         errors = character(0)
     )
-    
+
     # 1. Install packages if requested
     if (install_packages) {
         message("Installing required packages...")
@@ -224,21 +222,8 @@ create_transcriptomics_environment <- function(install_packages = TRUE,
             message("✗ Package installation failed: ", e$message)
         })
     }
-    
-    # 2. Create directory structure if requested
-    if (create_directories) {
-        message("Creating directory structure...")
-        tryCatch({
-            create_standard_directories(base_dir)
-            setup_results$directories_created <- TRUE
-            message("✓ Directory structure created")
-        }, error = function(e) {
-            setup_results$errors <- c(setup_results$errors, paste("Directory creation failed:", e$message))
-            message("✗ Directory creation failed: ", e$message)
-        })
-    }
-    
-    # 3. Set up environment information
+
+    # 2. Set up environment information
     setup_results$environment_info <- list(
         r_version = R.version.string,
         platform = R.version$platform,
@@ -247,29 +232,11 @@ create_transcriptomics_environment <- function(install_packages = TRUE,
         setup_date = Sys.time(),
         loaded_packages = .packages()
     )
-    
-    # 4. Load the transcriptomics pipeline
-    message("Loading transcriptomics pipeline...")
-    tryCatch({
-        if (requireNamespace("devtools", quietly = TRUE)) {
-            devtools::load_all()
-            setup_results$pipeline_loaded <- TRUE
-            message("✓ Transcriptomics pipeline loaded successfully")
-        } else {
-            setup_results$errors <- c(setup_results$errors, "devtools not available for loading pipeline")
-            message("✗ devtools not available")
-        }
-    }, error = function(e) {
-        setup_results$errors <- c(setup_results$errors, paste("Pipeline loading failed:", e$message))
-        message("✗ Pipeline loading failed: ", e$message)
-    })
-    
-    # 5. Print summary
+
+    # 3. Print summary
     message("\n=== Environment Setup Summary ===")
     message("Packages installed: ", setup_results$packages_installed)
-    message("Directories created: ", setup_results$directories_created)
-    message("Pipeline loaded: ", setup_results$pipeline_loaded %||% FALSE)
-    
+
     if (length(setup_results$errors) > 0) {
         message("\nErrors encountered:")
         for (error in setup_results$errors) {
@@ -277,71 +244,34 @@ create_transcriptomics_environment <- function(install_packages = TRUE,
         }
     } else {
         message("\n✓ Environment setup completed successfully!")
-        message("You can now run transcriptomics analyses using the pipeline functions.")
     }
-    
+
     return(setup_results)
 }
 
-#' Create standard directory structure for transcriptomics analysis
-#' 
-#' @param base_dir Base directory for the project
-#' @return List of created directories
-create_standard_directories <- function(base_dir = getwd()) {
-    # Define standard directory structure
-    directories <- c(
-        "data",
-        "results", 
-        "input_data",
-        "input_files",
-        "scripts",
-        "reports",
-        "temp"
-    )
-    
-    created_dirs <- character(0)
-    
-    for (dir in directories) {
-        dir_path <- file.path(base_dir, dir)
-        if (!dir.exists(dir_path)) {
-            if (dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)) {
-                created_dirs <- c(created_dirs, dir_path)
-                message("Created directory: ", dir_path)
-            } else {
-                warning("Failed to create directory: ", dir_path)
-            }
-        } else {
-            message("Directory already exists: ", dir_path)
-        }
-    }
-    
-    return(created_dirs)
-}
-
 #' Check if the transcriptomics environment is properly set up
-#' 
+#'
 #' @return List with environment status
 #' @export
 check_environment <- function() {
     message("Checking transcriptomics environment...")
-    
+
     status <- list(
         packages_available = FALSE,
-        directories_exist = FALSE,
         pipeline_loaded = FALSE,
         issues = character(0)
     )
-    
+
     # Check if required packages are available
     required_packages <- c("DESeq2", "dplyr", "ggplot2", "here")
     missing_packages <- character(0)
-    
+
     for (pkg in required_packages) {
         if (!requireNamespace(pkg, quietly = TRUE)) {
             missing_packages <- c(missing_packages, pkg)
         }
     }
-    
+
     if (length(missing_packages) == 0) {
         status$packages_available <- TRUE
         message("✓ All required packages are available")
@@ -349,35 +279,17 @@ check_environment <- function() {
         status$issues <- c(status$issues, paste("Missing packages:", paste(missing_packages, collapse = ", ")))
         message("✗ Missing packages: ", paste(missing_packages, collapse = ", "))
     }
-    
-    # Check if standard directories exist
-    required_dirs <- c("data", "results", "input_data", "input_files")
-    missing_dirs <- character(0)
-    
-    for (dir in required_dirs) {
-        if (!dir.exists(dir)) {
-            missing_dirs <- c(missing_dirs, dir)
-        }
-    }
-    
-    if (length(missing_dirs) == 0) {
-        status$directories_exist <- TRUE
-        message("✓ Standard directories exist")
-    } else {
-        status$issues <- c(status$issues, paste("Missing directories:", paste(missing_dirs, collapse = ", ")))
-        message("✗ Missing directories: ", paste(missing_dirs, collapse = ", "))
-    }
-    
+
     # Check if pipeline functions are available
     pipeline_functions <- c("import_omics_data", "run_deseq2_analysis", "perform_pca_analysis")
     missing_functions <- character(0)
-    
+
     for (func in pipeline_functions) {
         if (!exists(func)) {
             missing_functions <- c(missing_functions, func)
         }
     }
-    
+
     if (length(missing_functions) == 0) {
         status$pipeline_loaded <- TRUE
         message("✓ Pipeline functions are available")
@@ -385,7 +297,7 @@ check_environment <- function() {
         status$issues <- c(status$issues, paste("Missing functions:", paste(missing_functions, collapse = ", ")))
         message("✗ Missing functions: ", paste(missing_functions, collapse = ", "))
     }
-    
+
     # Overall status
     if (length(status$issues) == 0) {
         message("\n✓ Environment is properly set up!")
@@ -395,6 +307,6 @@ check_environment <- function() {
             message("- ", issue)
         }
     }
-    
+
     return(status)
 }

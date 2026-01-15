@@ -156,7 +156,6 @@ class TranscriptomicsPipelineMAS:
         start_time = time.time()
         
         print_substep("Installing R package dependencies...", "running")
-        print_substep("Creating directory structure...", "running")
         
         cmd = [
             "Rscript",
