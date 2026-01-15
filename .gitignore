@@ -61,3 +61,13 @@ Thumbs.db
 
 .env
 __pycache__/
+temp
+reports
+
+.Rcheck/
+.Rbuildignore
+
+CLAUDE.md
+
+.venv/
+.claude/

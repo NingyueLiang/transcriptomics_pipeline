@@ -1,0 +1,84 @@
+{
+  "experiment_info": {
+    "experiment_id": "RNA_LIVER_11A",
+    "experiment_name": "Liver Transcriptomics Study 1",
+    "experiment_date": "2024-11-15",
+    "experimenter": "Dr. Allison Grossberg",
+    "lab": "Transcriptomics Core Facility",
+    "description": "RNA-Seq analysis of liver tissue comparing drug-treated vs control conditions. Samples processed in 3 batches."
+  },
+  
+  "organism": {
+    "species": "Xenopus laevis",
+    "common_name": "African clawed frog",
+    "tissue_type": "Liver",
+    "conditions": ["Control", "Treated"],
+    "treatment": "Drug treatment (xenobiotic compound)",
+    "treatment_type": "Pharmacological intervention",
+    "expected_pathways": ["CYP450 metabolism", "Xenobiotic response", "Drug metabolism"],
+    "genome_notes": "Xenopus laevis is allotetraploid - genes have .S (short) and .L (long) homeolog versions"
+  },
+  
+  "experimental_design": {
+    "design_type": "case-control",
+    "number_of_groups": 2,
+    "replicates_per_group": 2,
+    "total_samples": 4,
+    "batches": 2,
+    "samples_per_batch": 2
+  },
+  
+  "sequencing": {
+    "platform": "Illumina NovaSeq 6000",
+    "library_prep": "Stranded poly-A selection",
+    "read_type": "paired-end",
+    "read_length": 150,
+    "expected_reads_per_sample": 30000000,
+    "sequencing_center": "Transcriptomics Core Facility"
+  },
+  
+  "data_analysis_settings": {
+    "alignment_software": "STAR",
+    "quantification_software": "RSEM",
+    "reference_genome": {
+      "name": "Xenopus laevis v10.1",
+      "version": "Xenopus_laevis_v10.1",
+      "source": "Xenbase",
+      "annotation_version": "v10.1",
+      "date": "2024-09-01",
+      "notes": "Allotetraploid genome with .S and .L homeolog chromosomes"
+    },
+    "alignment_parameters": {
+      "strandedness": "reverse",
+      "min_overhang": 10,
+      "splice_junctions": "annotated"
+    },
+    "deseq2_settings": {
+      "version": "1.42.0",
+      "design_formula": "~ condition",
+      "normalization": "DESeq2 internal",
+      "fdr_threshold": 0.05,
+      "min_counts_per_gene": 10,
+      "min_samples_with_counts": 3
+    },
+    "transcriptomics_pipeline": {
+      "repository_url": "https://github.com/agrossberg/transcriptomics_pipeline",
+      "scripts_used": [
+        "scripts/import.R",
+        "scripts/cleaning.R",
+        "scripts/dea_deseq_run.R",
+        "scripts/dea_deseq_diagnostics.R",
+        "scripts/dea_deseq_results.R",
+        "scripts/pca.R",
+        "scripts/gsea.R"
+      ]
+    }
+  },
+  
+  "file_locations": {
+    "sample_data": "scenario_11a_sample_data.csv",
+    "assay_data": "scenario_11a_assay_data.csv",
+    "output_directory": "analysis_output/"
+  }
+}
+

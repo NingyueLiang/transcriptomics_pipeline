@@ -1,0 +1,126 @@
+{
+  "experiment_info": {
+    "experiment_id": "PROT_AD_001",
+    "experiment_name": "Alzheimer's Disease Proteomics Study",
+    "experiment_date": "2024-10-15",
+    "experimenter": "Dr. Jane Smith",
+    "lab": "Neuroscience Proteomics Core",
+    "description": "Label-free quantification of protein expression in Alzheimer's disease brain tissue vs age-matched controls"
+  },
+  
+  "organism": {
+    "species": "Homo sapiens",
+    "common_name": "Human",
+    "tissue_type": "Brain - frontal cortex",
+    "disease_state": ["Control", "Alzheimer's Disease"]
+  },
+  
+  "experimental_design": {
+    "design_type": "case-control",
+    "number_of_groups": 2,
+    "replicates_per_group": 3,
+    "total_samples": 6
+  },
+  
+  "mass_spectrometry": {
+    "instrument": "Orbitrap Exploris 480",
+    "acquisition_mode": "DIA",
+    "acquisition_method": "Data-Independent Acquisition",
+    "gradient_length_min": 90,
+    "ms1_resolution": 120000,
+    "ms2_resolution": 30000,
+    "isolation_window_width_da": 8,
+    "number_of_windows": 40,
+    "cycle_time_sec": 2.5,
+    "collision_energy": "Stepped HCD (25%, 27.5%, 30%)",
+    "chromatography": "C18 reverse phase",
+    "flow_rate_nl_min": 300
+  },
+  
+  "sample_preparation": {
+    "lysis_buffer": "8M Urea, 50mM Tris-HCl pH 8.0",
+    "protein_extraction": "Standard lysis protocol",
+    "reduction": {
+      "reagent": "DTT",
+      "concentration_mm": 10,
+      "temperature_c": 56,
+      "time_min": 30
+    },
+    "alkylation": {
+      "reagent": "Iodoacetamide",
+      "concentration_mm": 25,
+      "temperature_c": 25,
+      "time_min": 30,
+      "notes": "In dark"
+    },
+    "digestion": {
+      "enzyme": "Trypsin",
+      "enzyme_to_protein_ratio": "1:50",
+      "time_hours": 16,
+      "temperature_c": 37
+    },
+    "desalting": "C18 Sep-Pak",
+    "membrane_enrichment": false
+  },
+  
+  "data_analysis_settings": {
+    "software": "DIA-NN",
+    "version": "1.8.1",
+    "spectral_library": {
+      "type": "predicted",
+      "source": "In-silico deep learning prediction (DIA-NN built-in)",
+      "generation_method": "Library-free mode with in-silico library"
+    },
+    "reference_database": {
+      "name": "UniProt Human Reference Proteome",
+      "accession": "UP000005640",
+      "date": "2024-09-01",
+      "entries": 105628,
+      "reviewed_only": false,
+      "includes_isoforms": true
+    },
+    "search_parameters": {
+      "enzyme": "Trypsin",
+      "missed_cleavages": 2,
+      "fixed_modifications": ["Carbamidomethyl (C)"],
+      "variable_modifications": ["Oxidation (M)", "Acetyl (Protein N-term)"],
+      "precursor_tolerance_ppm": 20,
+      "fragment_tolerance_ppm": 20,
+      "min_peptides_per_protein": 2,
+      "min_unique_peptides": 1
+    },
+    "quantification_settings": {
+      "method": "MaxLFQ",
+      "ms1_accuracy_ppm": 10,
+      "ms2_accuracy_ppm": 15,
+      "scan_window": 10,
+      "rt_profiling": true,
+      "cross_run_normalization": true
+    },
+    "fdr_settings": {
+      "precursor_fdr": 0.01,
+      "protein_fdr": 0.01,
+      "library_fdr": 0.01,
+      "fdr_method": "Target-decoy competition"
+    }
+  },
+  
+  "research_context": {
+    "protein_of_interest": {
+      "uniprot_id": "P02649",
+      "gene_name": "APOE",
+      "protein_name": "Apolipoprotein E",
+      "biological_context": "Major genetic risk factor for Alzheimer's disease, involved in lipid metabolism and amyloid-beta clearance"
+    },
+    "research_question": "Is APOE differentially expressed in Alzheimer's disease brain tissue compared to age-matched controls?",
+    "hypothesis": "APOE protein levels are upregulated in Alzheimer's disease samples",
+    "rationale": "APOE is a well-established AD risk factor. Literature suggests altered APOE expression in AD pathology."
+  },
+  
+  "file_locations": {
+    "raw_data_files": "DIA_raw_files/*.raw",
+    "sample_data": "scenario_2_sample_data.csv",
+    "assay_data": "scenario_2_assay_data.csv",
+    "output_directory": "analysis_output/"
+  }
+}
