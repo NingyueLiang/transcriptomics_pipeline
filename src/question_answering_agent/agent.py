@@ -15,12 +15,12 @@ import subprocess
 import textwrap
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from dotenv import load_dotenv
 
-from .hvd_api import call_hvd_api
-from .console_utils import (
+from ..utils.hvd_api import call_hvd_api
+from ..utils.console_utils import (
     print_banner,
     print_section,
     print_step,
@@ -36,7 +36,7 @@ from .console_utils import (
 load_dotenv()
 
 
-class TranscriptomicsPipelineMAS:
+class QuestionAnsweringAgent:
     """Thin orchestrator for the R pipeline and LLM-based report generation."""
 
     TOTAL_STEPS = 5  # Total number of main pipeline steps
@@ -159,7 +159,7 @@ class TranscriptomicsPipelineMAS:
         
         cmd = [
             "Rscript",
-            "src/setup_r_env.R",
+            "src/scripts/setup_R_env.R",
             "--base-dir",
             str(self.repo_root),
         ]
@@ -181,7 +181,7 @@ class TranscriptomicsPipelineMAS:
         
         cmd = [
             "Rscript",
-            "src/run_r_pipeline.R",
+            "src/scripts/run_R_pipeline.R",
             "--experiment-name",
             self.experiment_name,
             "--assay-file",

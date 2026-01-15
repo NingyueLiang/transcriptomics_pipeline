@@ -12,18 +12,18 @@ get_repo_root <- function() {
     if (length(file_arg) > 0) {
         script_path <- sub("^--file=", "", file_arg[1])
     } else {
-        script_path <- file.path(getwd(), "src", "run_r_pipeline.R")
+        script_path <- file.path(getwd(), "src", "scripts", "run_R_pipeline.R")
     }
-    normalizePath(file.path(dirname(script_path), ".."))
+    normalizePath(file.path(dirname(script_path), "..", ".."))
 }
 
 repo_root <- get_repo_root()
 setwd(repo_root)
-here::i_am("src/run_r_pipeline.R")
+here::i_am("src/scripts/run_R_pipeline.R")
 
-# Source all R files from src/R/ to load functions directly
+# Source all R files from src/R_tools/ to load functions directly
 load_pipeline_functions <- function() {
-    r_dir <- file.path(repo_root, "src", "R")
+    r_dir <- file.path(repo_root, "src", "R_tools")
     r_files <- list.files(r_dir, pattern = "\\.R$", full.names = TRUE, ignore.case = TRUE)
     for (f in r_files) {
         source(f, local = FALSE)
@@ -78,11 +78,7 @@ opt <- parse_args(parser)
 load_pipeline_functions()
 
 experiment_name <- opt$`experiment-name`
-summary_path <- if (basename(opt$`summary-file`) == "pipeline_summary.json") {
-    file.path("results", experiment_name, "pipeline_summary.json")
-} else {
-    opt$`summary-file`
-}
+summary_path <- opt$`summary-file`
 
 group_cols_vec <- strsplit(opt$`group-cols`, ",", fixed = TRUE)[[1]]
 group_cols_vec <- trimws(group_cols_vec)

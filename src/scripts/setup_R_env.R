@@ -27,18 +27,18 @@ get_repo_root <- function() {
     if (length(file_arg) > 0) {
         script_path <- sub("^--file=", "", file_arg[1])
     } else {
-        script_path <- file.path(getwd(), "src", "setup_r_env.R")
+        script_path <- file.path(getwd(), "src", "scripts", "setup_R_env.R")
     }
-    normalizePath(file.path(dirname(script_path), ".."))
+    normalizePath(file.path(dirname(script_path), "..", ".."))
 }
 
 repo_root <- get_repo_root()
 setwd(repo_root)
-here::i_am("src/setup_r_env.R")
+here::i_am("src/scripts/setup_R_env.R")
 
 # Install pipeline dependencies (CRAN + Bioc) before loading package code
 ensure_pipeline_dependencies <- function() {
-    setup_file <- file.path(repo_root, "src", "R", "setup.R")
+    setup_file <- file.path(repo_root, "src", "R_tools", "setup.R")
     if (!file.exists(setup_file)) {
         stop("Cannot find setup.R at ", setup_file)
     }
@@ -60,9 +60,9 @@ ensure_pipeline_dependencies <- function() {
     message("Dependency installation complete.")
 }
 
-# Source all R files from src/R/ to load functions directly
+# Source all R files from src/R_tools/ to load functions directly
 load_pipeline_functions <- function() {
-    r_dir <- file.path(repo_root, "src", "R")
+    r_dir <- file.path(repo_root, "src", "R_tools")
     r_files <- list.files(r_dir, pattern = "\\.R$", full.names = TRUE, ignore.case = TRUE)
     for (f in r_files) {
         source(f, local = FALSE)

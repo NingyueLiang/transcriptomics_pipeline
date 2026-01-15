@@ -268,7 +268,8 @@ create_experiment_object <- function(metadata, data_dictionary, sample_data, ass
 suggest_gene_column <- function(column_names) {
     common_gene_names <- c(
         "gene_symbol", "Gene", "GENE", "gene", "Gene_Symbol", "GENE_SYMBOL",
-        "gene_name", "GeneName", "GENE_NAME", "symbol", "Symbol", "SYMBOL"
+        "gene_name", "GeneName", "GENE_NAME", "symbol", "Symbol", "SYMBOL",
+        "Protein_ID", "protein_id", "PROTEIN_ID"
     )
     
     # Find matching columns
@@ -286,7 +287,8 @@ suggest_gene_column <- function(column_names) {
 standardize_gene_symbol_column <- function(assay_data) {
     if (!"gene_symbol" %in% colnames(assay_data)) {
         # Check if it might be named differently
-        possible_gene_cols <- c("Gene", "GENE", "gene", "Gene_Symbol", "GENE_SYMBOL")
+        possible_gene_cols <- c("Gene", "GENE", "gene", "Gene_Symbol", "GENE_SYMBOL",
+                                "Protein_ID", "protein_id", "PROTEIN_ID")
         gene_col <- which(colnames(assay_data) %in% possible_gene_cols)[1]
         
         if (!is.na(gene_col)) {

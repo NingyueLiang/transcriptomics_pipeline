@@ -8,13 +8,14 @@ source .venv/bin/activate
 
 export HVD_API_KEY=jzmwbIL1QJG1vT2AC8yTZzJJFA80xeBGVtrTxfkTHmGu5GIE
 
+# Run Self-Exploration agent
 python main.py \
-  --experiment-name scenario_11a \
-  --assay-file scenarios/scenario_11a/scenario_11a_assay_data.csv \
-  --sample-file scenarios/scenario_11a/scenario_11a_sample_data.csv \
+  --agent-type se \
+  --experiment-name scenario_2 \
+  --assay-file scenarios/scenario_2/scenario_2_assay_data.csv \
+  --sample-file scenarios/scenario_2/scenario_2_sample_data.csv \
   --reference-condition Control \
   --group-cols "condition,replicate,batch" \
   --comparison-cols "condition" \
-  --skip-mapping \
-  --skip-gsea \
+  --num-rqs 5 \
   "$@"
