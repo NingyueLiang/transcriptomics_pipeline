@@ -1,182 +1,177 @@
-# transcriptomicsPipeline
+# Transcriptomics Multi-Agent System
 
-An R package for Xenopus laevis transcriptomics analysis. Provides automated workflows for differential expression analysis, gene mapping to human orthologs, and pathway enrichment.
+A Multi-Agent System (MAS) for Xenopus laevis transcriptomics analysis, combining R-based bioinformatics tools with LLM-powered analysis and report generation.
 
 ## Overview
 
-This package was developed to analyze transcriptomics data from Xenopus laevis experiments, particularly focusing on anesthetic drug responses. It handles the complete analysis pipeline from raw data import through pathway enrichment analysis.
+This system provides automated workflows for differential expression analysis, gene mapping to human orthologs, and pathway enrichment. It was developed to analyze transcriptomics data from Xenopus laevis experiments, particularly focusing on anesthetic drug responses.
 
 ## Key Features
 
 - **Differential Expression**: DESeq2-based analysis with automated contrast generation
-- **Gene Mapping**: Xenopus to human ortholog mapping using Xenbase and HCOP databases  
+- **Gene Mapping**: Xenopus to human ortholog mapping using Xenbase and HCOP databases
 - **Pathway Analysis**: GSEA using MSigDB gene sets with human gene symbols
-- **Visualization**: Automated generation of volcano plots, heatmaps, and PCA plots
-- **Quality Control**: Comprehensive diagnostic plots and statistical reports
+- **LLM-Powered Reports**: Automated report generation with verification
+- **Multi-Agent Architecture**: Three specialized agents for different analysis workflows
+
+## Agent Types
+
+| Agent | Purpose | Input | Output |
+|-------|---------|-------|--------|
+| **QA Agent** | Question-Answering | Question + Database | Report |
+| **SE Agent** | Self-Exploration | Database | Research questions + Results |
+| **Collaborative Agent** | Human-AI Research | Interactive conversation | Analysis results + Memory |
 
 ## Installation
 
-```r
-# Install from GitHub
-devtools::install_github("agrossberg/transcriptomics_pipeline")
-
-# Or install from source
+```bash
+# Clone the repository
 git clone https://github.com/agrossberg/transcriptomics_pipeline.git
-R CMD INSTALL transcriptomics_pipeline
-```
+cd transcriptomics_pipeline
 
-> **Note:** Pluto API workflows depend on the [`pluto`](https://github.com/pluto-biosciences/pluto-sdk-r) package, which the environment setup script installs automatically from GitHub. To install manually:
-> ```r
-> install.packages("devtools")      # or remotes
-> remotes::install_github("pluto-biosciences/pluto-sdk-r")
-> ```
+# Set up Python environment
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Set API key
+export HVD_API_KEY=<your-key>
+```
 
 ## Quick Start
 
-```r
-library(transcriptomicsPipeline)
+### Question-Answering Agent
 
-# 1. Import data
-experiment_obj <- import_omics_data(
-    data_source = "local",
-    data_type = "transcriptomics", 
-    species = "xenopus",
-    assay_path = "assay_data.csv",
-    sample_path = "sample_data.csv",
-    experiment_name = "my_experiment"
-)
+Runs the full R pipeline and generates an LLM report based on your query:
 
-# 2. Clean data
-clean_data_for_de(
-    experiment_name = "my_experiment",
-    metadata_cols = list(
-        sample_id = "sample_id",
-        group_cols = c("condition", "timepoint")
-    )
-)
-
-# 3. Run differential expression analysis
-de_results <- run_deseq2_analysis(
-    experiment_name = "my_experiment",
-    comparison_cols = c("condition", "timepoint"),
-    reference_levels = list(condition = "Vehicle", timepoint = "T"),
-    interactive = FALSE
-)
-
-# 4. Map genes to human orthologs
-mapping_results <- map_xenopus_to_human(
-    xenopus_genes = gene_list,
-    xenbase_file = "xenbase_orthologs.txt",
-    hcop_file = "hcop_orthologs.txt",
-    experiment_name = "my_experiment"
-)
-
-# 5. Run pathway enrichment
-gsea_results <- run_gsea_analysis(
-    experiment_name = "my_experiment",
-    model_type = "deseq2",
-    suffix_mode = "all",
-    mapping_type = "clean",
-    collections = c("H", "C2", "C5")
-)
+```bash
+python main.py --agent-type qa \
+  --experiment-name my_experiment \
+  --assay-file data/assay_data.csv \
+  --sample-file data/sample_data.csv \
+  --user-query "What genes are differentially expressed between conditions?"
 ```
 
-## Automated Python Agent
+### Self-Exploration Agent
 
-A Python agent located in `scripts/pipeline_agent.py` automates the full workflow:
+Autonomously generates and investigates research questions:
 
-1. **Activate the required conda environment**  
-   ```bash
-   conda activate ma4bio
-   pip install litellm  # and any other Python deps you need
-   export LITELLM_API_KEY=...  # or whichever env var Together uses in your setup
-   ```
+```bash
+python main.py --agent-type se \
+  --experiment-name my_experiment \
+  --assay-file data/assay_data.csv \
+  --sample-file data/sample_data.csv \
+  --num-rqs 10
+```
 
-2. **Run the orchestrator (from the repo root)**  
-   ```bash
-   python scripts/pipeline_agent.py \
-     --experiment-name xen_tran_2024_12 \
-     --assay-file data/PLX073248_assay_data.csv \
-     --sample-file data/PLX073248_sample_data.csv
-   ```
+### Collaborative Agent
 
-   - `scripts/setup_r_env.R` is called automatically to create/refresh the R environment (packages + directories).
-   - `scripts/run_r_pipeline.R` ingests the data in `data/`, runs import → cleaning → DESeq2 → mapping → GSEA, and writes a summary JSON to `results/<experiment>/pipeline_summary.json`.
-   - The agent then calls the Together-hosted `together_ai/Qwen/Qwen3-Next-80B-A3B-Instruct` model via `litellm` to draft a markdown report stored at `results/<experiment>/llm_report.md`.
+Interactive human-AI research collaboration with persistent memory:
 
-3. **Optional flags**
+```bash
+bash jobs/launch_collab.sh
 
-   - `--skip-r-setup` skips the R bootstrap step if packages are already installed.
-   - `--skip-llm` runs the analytics but omits the LLM call (useful for offline testing).
-   - `--collections`, `--suffix-mode`, `--reference-condition`, and `--reference-timepoint` allow you to override the defaults passed to the R scripts.
+# Or with custom parameters:
+MODE=simulated SCENARIO=scenario_2 MAX_TURNS=15 bash jobs/launch_collab.sh
+```
 
-All intermediate data required by the pipeline (assay, metadata, orthology files) is expected inside the `data/` directory supplied with this repository.
+### Using Launch Scripts
+
+Launch scripts set up the environment and API keys automatically:
+
+```bash
+bash jobs/launch_qa.sh   # QA agent
+bash jobs/launch_se.sh   # SE agent
+```
 
 ## Data Requirements
 
 ### Input Files
-- **Assay data**: CSV with gene symbols in first column, samples as columns
-- **Sample metadata**: CSV with sample information and experimental conditions
-- **Orthology files**: Xenbase and HCOP orthology prediction files
 
-### Sample Metadata Columns
-- `sample_id`: Unique sample identifiers
-- `condition`: Treatment conditions (e.g., Vehicle, Ketamine_100, etc.)
+**Assay data (CSV):**
+- First column: gene symbols (used as row names)
+- Remaining columns: sample expression counts
+
+**Sample metadata (CSV):**
+- `sample_id`: Unique identifiers matching assay column names
+- `condition`: Treatment conditions (e.g., Vehicle, Ketamine_100)
 - `timepoint`: Time points (e.g., T, R)
-- `dose`: Drug concentrations
-- `drug`: Drug names
+- Optional: `batch`, `replicate`, `dose`, `drug`
+
+**Orthology files** (for gene mapping):
+- Xenbase orthology predictions
+- HCOP orthology predictions
 
 ## Output Structure
 
 ```
 results/
 └── experiment_name/
-    ├── de/                    # Differential expression results
-    │   ├── csv/              # CSV files with results
-    │   ├── tables/           # Formatted tables
-    │   └── plots/            # Volcano plots and heatmaps
-    ├── mapping/              # Gene mapping results
-    ├── pca/                  # PCA analysis and plots
-    └── gsea/                 # Pathway enrichment results
+    ├── qa_agent/              # QA agent outputs
+    │   ├── pipeline_summary.json
+    │   └── report.md
+    ├── se_agent/              # SE agent outputs
+    │   ├── summary.json
+    │   ├── summary.md
+    │   └── questions/
+    │       └── rq_XXX/
+    ├── collab_agent/          # Collaborative agent outputs
+    ├── de/                    # Differential expression
+    │   ├── csv/
+    │   ├── tables/
+    │   └── plots/
+    ├── mapping/               # Gene mapping results
+    ├── pca/                   # PCA analysis
+    └── gsea/                  # Pathway enrichment
 ```
 
-## Analysis Workflow
+## Command Line Arguments
 
-1. **Data Import**: Load expression data and sample metadata
-2. **Quality Control**: Generate diagnostic plots and reports
-3. **Differential Expression**: Identify significantly changed genes
-4. **Gene Mapping**: Convert Xenopus genes to human orthologs
-5. **Pathway Analysis**: Enrichment analysis using human gene sets
-6. **Visualization**: Generate publication-ready plots
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--agent-type` | Agent type: `qa` or `se` | `qa` |
+| `--experiment-name` | Experiment identifier | `experiment` |
+| `--assay-file` | Path to assay counts CSV | Required |
+| `--sample-file` | Path to sample metadata CSV | Required |
+| `--user-query` | Question for QA agent | General analysis |
+| `--num-rqs` | Number of research questions (SE) | `5` |
+| `--reference-condition` | Reference for DESeq2 | `Control` |
+| `--skip-r-setup` | Skip R environment bootstrap | `false` |
+| `--skip-llm` | Skip LLM report generation | `false` |
+| `--skip-mapping` | Skip gene mapping step | `false` |
+| `--skip-gsea` | Skip GSEA step | `false` |
 
-## Configuration
+## Architecture
 
-The package uses sensible defaults but allows customization through configuration objects:
+```
+main.py                          # Entry point
+src/
+├── question_answering_agent/    # QA agent
+├── self_exploration_agent/      # SE agent
+├── collaborative_agent/         # Collaborative agent
+│   ├── agent.py                 # Core agent logic
+│   ├── tools.py                 # Analysis tools
+│   ├── memory_system.py         # Persistent memory
+│   └── run_experiment.py        # Experiment runner
+├── utils/                       # Shared utilities
+├── scripts/                     # R pipeline scripts
+└── R_tools/                     # R analysis functions
+```
 
-- `dea_config`: DESeq2 analysis parameters
-- `mapping_config`: Gene mapping settings
-- `gsea_config`: Pathway analysis parameters
-- `pca_config`: PCA analysis options
+## R Dependencies
 
-## Dependencies
+Core packages: `DESeq2`, `fgsea`, `msigdbr`, `jsonlite`, `optparse`, `here`, `dplyr`, `tidyr`, `ggplot2`, `ComplexHeatmap`, `viridis`
 
-### Core R Packages
-- dplyr, tidyr, ggplot2, readr
-- DESeq2, edgeR, limma
-- msigdbr, fgsea
-- ComplexHeatmap, viridis
-
-### Bioconductor
-- DESeq2, ComplexHeatmap
-- msigdbr, fgsea
-- org.Hs.eg.db, AnnotationDbi
-
+The R environment is set up automatically on first run, or manually via:
+```bash
+Rscript src/scripts/setup_R_env.R
+```
 
 ## Contact
 
-**Allison Grossberg**  
-Wyss Institute for Biologically Inspired Engineering  
-Harvard University  
+**Allison Grossberg**
+Wyss Institute for Biologically Inspired Engineering
+Harvard University
 Email: allison.grossberg@wyss.harvard.edu
 
 ## License
